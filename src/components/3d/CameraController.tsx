@@ -27,7 +27,7 @@ export const CameraController: React.FC<CameraControllerProps> = ({
   isMobile,
 }) => {
   const controlsRef = useRef<OrbitControlsImpl>(null);
-  const { camera } = useThree();
+  const { camera, gl } = useThree();
 
   const isLerping = useRef(false);
   const targetPos = useRef(new THREE.Vector3());
@@ -70,13 +70,13 @@ export const CameraController: React.FC<CameraControllerProps> = ({
       setIsModifierPressed(false);
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('keyup', handleKeyUp);
     window.addEventListener('blur', handleBlur);
 
     return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('keyup', handleKeyUp);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('keyup', handleKeyUp);
       window.removeEventListener('blur', handleBlur);
     };
   }, []);
@@ -101,6 +101,58 @@ export const CameraController: React.FC<CameraControllerProps> = ({
       document.removeEventListener('pointerlockchange', handleLockChange);
     };
   }, [preset, onExitStreetView]);
+
+  useEffect(() => {
+    // If not in Street View or not mobile, do not activate touch look-around
+    const currentPreset = presetRef.current;
+    const isMobileDevice = isMobileRef.current;
+    if (currentPreset !== 'street' || !isMobileDevice) return;
+
+    const dom = gl.domElement;
+    let isDragging = false;
+    let prevX = 0;
+    let prevY = 0;
+
+    const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+    euler.setFromQuaternion(camera.quaternion);
+
+    const handlePointerDown = (e: PointerEvent) => {
+      if ((e.target as HTMLElement)?.closest('.pointer-events-auto')) return;
+      isDragging = true;
+      prevX = e.clientX;
+      prevY = e.clientY;
+    };
+
+    const handlePointerMove = (e: PointerEvent) => {
+      if (!isDragging) return;
+      const deltaX = e.clientX - prevX;
+      const deltaY = e.clientY - prevY;
+
+      prevX = e.clientX;
+      prevY = e.clientY;
+
+      euler.y -= deltaX * 0.0035;
+      euler.x -= deltaY * 0.0035;
+
+      euler.x = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, euler.x));
+
+      camera.quaternion.setFromEuler(euler);
+    };
+
+    const handlePointerUp = () => {
+      isDragging = false;
+    };
+
+    dom.addEventListener('pointerdown', handlePointerDown);
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+
+    return () => {
+      dom.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, [preset, isMobile, camera, gl]);
 
   useEffect(() => {
     let pos: [number, number, number] = [0, 120, 80];
@@ -186,6 +238,15 @@ export const CameraController: React.FC<CameraControllerProps> = ({
         const dir = new THREE.Vector3();
         camera.getWorldDirection(dir);
         dir.y = 0; // Lock walking strictly to XZ ground plane
+        if (dir.lengthSq() < 0.001) {
+          const tempDir = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+          tempDir.y = 0;
+          if (tempDir.lengthSq() > 0.001) {
+            dir.copy(tempDir);
+          } else {
+            dir.set(0, 0, -1);
+          }
+        }
         dir.normalize();
 
         const right = new THREE.Vector3();
@@ -276,8 +337,11 @@ export const CameraController: React.FC<CameraControllerProps> = ({
 
   const isStreetLevel = preset === 'street';
 
-  if (isStreetLevel && !isMobile) {
-    return <PointerLockControls />;
+  if (isStreetLevel) {
+    if (!isMobile) {
+      return <PointerLockControls />;
+    }
+    return null;
   }
 
   return (
@@ -285,14 +349,12 @@ export const CameraController: React.FC<CameraControllerProps> = ({
       ref={controlsRef}
       enableDamping={true}
       dampingFactor={0.08} // Smooth fluid inertia glide
-      rotateSpeed={isStreetLevel ? 0.45 : 0.8}
+      rotateSpeed={0.8}
       zoomSpeed={1.2}
-      enableZoom={!isStreetLevel}
-      enablePan={!isStreetLevel}
+      enablePan={true} // Free ground panning like Google Maps / Earth
       screenSpacePanning={false} // Pan along XZ ground plane naturally
       panSpeed={1.8}
-      maxPolarAngle={isStreetLevel ? Math.PI / 1.75 : Math.PI / 2.1}
-      minPolarAngle={isStreetLevel ? Math.PI / 2.45 : 0}
+      maxPolarAngle={Math.PI / 2 - 0.02}
       minDistance={1.2}
       maxDistance={300}
       onStart={() => {

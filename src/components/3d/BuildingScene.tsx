@@ -56,9 +56,7 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
 
   useEffect(() => {
     const checkMobile = () => {
-      const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-      const isMobileUA = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-      setIsMobile(window.innerWidth < 768 || (isTouch && isMobileUA));
+      setIsMobile(window.innerWidth < 768);
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
