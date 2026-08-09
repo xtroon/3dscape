@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Canvas, ThreeEvent } from '@react-three/fiber';
-import { Sky, ContactShadows, PivotControls, Html } from '@react-three/drei';
+import { Sky, ContactShadows, PivotControls } from '@react-three/drei';
 import * as THREE from 'three';
 
 import {
@@ -150,23 +150,7 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
           <meshBasicMaterial />
         </mesh>
 
-        {/* AAA Game-Style Cursor Coordinate Badge & Ring */}
-        {isPointerOverGround && (
-          <group position={cursorPos}>
-            {/* Glowing Ground Ring */}
-            <mesh position={[0, 0.08, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-              <ringGeometry args={[1.5, 1.8, 32]} />
-              <meshBasicMaterial color={placementTool ? '#10b981' : '#38bdf8'} side={THREE.DoubleSide} transparent opacity={0.7} />
-            </mesh>
-
-            {/* Coordinate Badge Floating Label */}
-            <Html position={[0, 1.5, 0]} center pointerEvents="none">
-              <div className="glass-pill flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold text-emerald-300 shadow-lg border border-emerald-500/40">
-                <span>📍 X: {cursorPos[0]}m | Z: {cursorPos[2]}m</span>
-              </div>
-            </Html>
-          </group>
-        )}
+        {/* Ghost Placement Preview (only visible when actively placing an item) */}
 
         {/* Ghost Placement Preview */}
         {placementTool && isPointerOverGround && (
