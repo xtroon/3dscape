@@ -36,23 +36,10 @@ export const ViewPresetsBar: React.FC<ViewPresetsBarProps> = ({
       icon: <Eye className="h-4 w-4 text-blue-400" />,
       tooltip: 'Street level perspective overview',
     },
-    {
-      id: 'street_walk',
-      label: 'Walk Mode (WASD)',
-      icon: <Footprints className="h-4 w-4 text-amber-400" />,
-      tooltip: 'Human eye-level WASD keyboard walking mode',
-    },
   ];
 
   return (
     <div className="absolute bottom-6 left-1/2 z-20 -translate-x-1/2 pointer-events-auto flex flex-col items-center gap-2">
-      {/* WASD Walking navigation notification */}
-      {currentPreset === 'street_walk' && (
-        <div className="glass-panel flex items-center gap-2 rounded-full px-3.5 py-1 text-xs font-bold text-amber-300 border border-amber-500/40 shadow-xl">
-          <Footprints className="h-3.5 w-3.5 text-amber-400" />
-          <span>Use WASD or Arrow Keys to walk down any street!</span>
-        </div>
-      )}
 
       {/* Simplified Presets Bar */}
       <div className="glass-panel flex items-center gap-1.5 rounded-2xl p-1.5 shadow-2xl border border-slate-700/60">

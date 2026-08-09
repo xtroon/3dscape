@@ -160,11 +160,14 @@ export const App: React.FC = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setPlacementTool(null);
+        if (cameraPreset === 'street') {
+          setCameraPreset('master_map');
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [cameraPreset]);
 
   const handleFocusSelectedItem = () => {
     if (!selectedItem) return;
@@ -410,53 +413,63 @@ export const App: React.FC = () => {
     }
   };
 
+  const isStreetView = cameraPreset === 'street';
+
   return (
     <div className="relative h-screen w-screen overflow-hidden bg-slate-950 font-sans">
       {/* Header Overlay */}
-      <Header
-        siteConfig={siteConfig}
-        onChangeSiteConfig={(newPartial) => setSiteConfig((prev) => ({ ...prev, ...newPartial }))}
-        onCaptureScreenshot={handleCaptureScreenshot}
-      />
+      {!isStreetView && (
+        <Header
+          siteConfig={siteConfig}
+          onChangeSiteConfig={(newPartial) => setSiteConfig((prev) => ({ ...prev, ...newPartial }))}
+          onCaptureScreenshot={handleCaptureScreenshot}
+        />
+      )}
 
       {/* Top Creation Toolbar */}
-      <SitePlannerToolbar
-        placementTool={placementTool}
-        onSelectPlacementTool={setPlacementTool}
-      />
+      {!isStreetView && (
+        <SitePlannerToolbar
+          placementTool={placementTool}
+          onSelectPlacementTool={setPlacementTool}
+        />
+      )}
 
       {/* Selected Item Control Panel */}
-      <ControlPanel
-        buildings={buildings}
-        elements={elements}
-        siteConfig={siteConfig}
-        selectedItem={selectedItem}
-        onUpdateSiteConfig={(newPartial) => setSiteConfig((prev) => ({ ...prev, ...newPartial }))}
-        onUpdateBuildingConfig={handleUpdateBuildingConfig}
-        onUpdateBuildingDimensions={handleUpdateBuildingDimensions}
-        onUpdateElementDimensions={handleUpdateElementDimensions}
-        onUpdateElementLightProps={handleUpdateElementLightProps}
-        onUpdateBuildingName={handleUpdateBuildingName}
-        onUpdateElementName={handleUpdateElementName}
-        onNudgePosition={handleNudgePosition}
-        onRotateItemAngle={handleRotateItemAngle}
-        onDuplicateItem={handleDuplicateItem}
-        onDeleteItem={handleDeleteItem}
-      />
+      {!isStreetView && (
+        <ControlPanel
+          buildings={buildings}
+          elements={elements}
+          siteConfig={siteConfig}
+          selectedItem={selectedItem}
+          onUpdateSiteConfig={(newPartial) => setSiteConfig((prev) => ({ ...prev, ...newPartial }))}
+          onUpdateBuildingConfig={handleUpdateBuildingConfig}
+          onUpdateBuildingDimensions={handleUpdateBuildingDimensions}
+          onUpdateElementDimensions={handleUpdateElementDimensions}
+          onUpdateElementLightProps={handleUpdateElementLightProps}
+          onUpdateBuildingName={handleUpdateBuildingName}
+          onUpdateElementName={handleUpdateElementName}
+          onNudgePosition={handleNudgePosition}
+          onRotateItemAngle={handleRotateItemAngle}
+          onDuplicateItem={handleDuplicateItem}
+          onDeleteItem={handleDeleteItem}
+        />
+      )}
 
       {/* Right Outliner Inventory */}
-      <SiteObjectList
-        buildings={buildings}
-        elements={elements}
-        selectedItem={selectedItem}
-        onSelectItem={(item) => {
-          setSelectedItem(item);
-          setPlacementTool(null);
-          setFocusTarget(null);
-        }}
-        onDuplicateItem={handleDuplicateItem}
-        onDeleteItem={handleDeleteItem}
-      />
+      {!isStreetView && (
+        <SiteObjectList
+          buildings={buildings}
+          elements={elements}
+          selectedItem={selectedItem}
+          onSelectItem={(item) => {
+            setSelectedItem(item);
+            setPlacementTool(null);
+            setFocusTarget(null);
+          }}
+          onDuplicateItem={handleDuplicateItem}
+          onDeleteItem={handleDeleteItem}
+        />
+      )}
 
       {/* Main Interactive 3D Canvas Scene */}
       <BuildingScene
@@ -481,16 +494,18 @@ export const App: React.FC = () => {
       />
 
       {/* Bottom Camera View Presets Bar */}
-      <ViewPresetsBar
-        currentPreset={cameraPreset}
-        hasSelectedItem={selectedItem !== null}
-        onSelectPreset={(p) => {
-          setCameraPreset(p);
-          setFocusTarget(null);
-        }}
-        onFocusSelectedItem={handleFocusSelectedItem}
-        onResetView={handleResetView}
-      />
+      {!isStreetView && (
+        <ViewPresetsBar
+          currentPreset={cameraPreset}
+          hasSelectedItem={selectedItem !== null}
+          onSelectPreset={(p) => {
+            setCameraPreset(p);
+            setFocusTarget(null);
+          }}
+          onFocusSelectedItem={handleFocusSelectedItem}
+          onResetView={handleResetView}
+        />
+      )}
     </div>
   );
 };

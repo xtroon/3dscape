@@ -102,40 +102,40 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
     }
   };
 
-  const isStreetView = preset === 'street' || preset === 'street_walk';
+  const isStreetView = preset === 'street';
 
   return (
     <div className="relative h-full w-full bg-slate-950">
       {/* Street View UI Overlay */}
       {isStreetView && (
-        <div className="absolute top-6 left-1/2 z-30 -translate-x-1/2 flex flex-col items-center gap-3 w-[90%] max-w-sm pointer-events-none">
-          {/* WASD + Mouse Hint */}
-          <div className="w-full glass-panel border border-amber-500/25 bg-slate-950/80 backdrop-blur-md rounded-2xl p-4 shadow-2xl flex flex-col items-center text-center animate-in fade-in slide-in-from-top-4 duration-300">
-            <div className="flex items-center gap-2 text-amber-400 font-extrabold text-xs mb-1.5 uppercase tracking-wider">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
-              </span>
-              Street View Mode
-            </div>
-            <p className="text-slate-300 text-xs leading-relaxed mb-3">
-              Click on screen to lock cursor and look around. Use <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-amber-300 font-mono font-bold text-[10px]">W</kbd> <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-amber-300 font-mono font-bold text-[10px]">A</kbd> <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-amber-300 font-mono font-bold text-[10px]">S</kbd> <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-amber-300 font-mono font-bold text-[10px]">D</kbd> keys to walk.
-            </p>
-            <div className="text-[10px] text-slate-400">
-              Press <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded font-semibold">ESC</kbd> to unlock mouse cursor.
-            </div>
-          </div>
-
-          {/* Exit Street View Button */}
+        <>
+          {/* Top-Right Exit Button */}
           {onExitStreetView && (
             <button
               onClick={onExitStreetView}
-              className="pointer-events-auto flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-bold text-xs rounded-xl px-5 py-2.5 shadow-xl shadow-rose-950/20 transition-all border border-rose-500/20"
+              className="absolute top-6 right-6 z-40 pointer-events-auto flex items-center justify-center gap-1.5 bg-slate-900/80 hover:bg-slate-800 active:scale-95 text-white font-extrabold text-xs rounded-xl px-4 py-2.5 shadow-2xl backdrop-blur-md border border-slate-700/60 transition-all hover:border-emerald-500/40"
+              title="Exit Street View and return to Master Map"
             >
-              Exit Street View
+              <span>Exit (ESC)</span>
             </button>
           )}
-        </div>
+
+          {/* Simple Floating Hint Card */}
+          <div className="absolute top-6 left-1/2 z-30 -translate-x-1/2 pointer-events-none flex flex-col items-center w-[90%] max-w-xs">
+            <div className="w-full glass-panel border border-emerald-500/20 bg-slate-950/80 backdrop-blur-md rounded-2xl p-3.5 shadow-2xl flex flex-col items-center text-center animate-in fade-in slide-in-from-top-4 duration-300">
+              <div className="flex items-center gap-1.5 text-emerald-400 font-extrabold text-xs mb-1 uppercase tracking-wider">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                </span>
+                Street View
+              </div>
+              <p className="text-slate-300 text-[11px] leading-normal mb-1">
+                Click to lock mouse & look around (360°). Use <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-emerald-300 font-mono font-bold text-[9px]">W</kbd> <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-emerald-300 font-mono font-bold text-[9px]">A</kbd> <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-emerald-300 font-mono font-bold text-[9px]">S</kbd> <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-emerald-300 font-mono font-bold text-[9px]">D</kbd> to walk.
+              </p>
+            </div>
+          </div>
+        </>
       )}
 
       <Canvas
@@ -375,6 +375,7 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
           doubleClickTarget={doubleClickTarget}
           buildings={buildings}
           plotSize={siteConfig.plotSize}
+          onExitStreetView={onExitStreetView}
         />
       </Canvas>
     </div>

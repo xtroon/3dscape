@@ -1,4 +1,4 @@
-export type CameraPreset = 'master_map' | 'street' | 'street_walk';
+export type CameraPreset = 'master_map' | 'street';
 
 export type TimeOfDay = 'day' | 'sunset' | 'night';
 

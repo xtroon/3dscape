@@ -11,6 +11,7 @@ interface CameraControllerProps {
   doubleClickTarget?: [number, number, number] | null;
   buildings?: SiteBuilding[];
   plotSize?: [number, number];
+  onExitStreetView?: () => void;
 }
 
 export const CameraController: React.FC<CameraControllerProps> = ({
@@ -19,6 +20,7 @@ export const CameraController: React.FC<CameraControllerProps> = ({
   doubleClickTarget,
   buildings,
   plotSize,
+  onExitStreetView,
 }) => {
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const { camera } = useThree();
@@ -67,13 +69,17 @@ export const CameraController: React.FC<CameraControllerProps> = ({
     const handleLockChange = () => {
       if (document.pointerLockElement) {
         isLerping.current = false;
+      } else if (preset === 'street') {
+        if (onExitStreetView) {
+          onExitStreetView();
+        }
       }
     };
     document.addEventListener('pointerlockchange', handleLockChange);
     return () => {
       document.removeEventListener('pointerlockchange', handleLockChange);
     };
-  }, []);
+  }, [preset, onExitStreetView]);
 
   useEffect(() => {
     let pos: [number, number, number] = [0, 120, 80];
@@ -91,13 +97,7 @@ export const CameraController: React.FC<CameraControllerProps> = ({
           break;
 
         case 'street':
-          // Human Eye-Level Street Overview
-          pos = [0, 3.5, 45];
-          look = [0, 3.5, 44.9]; // 0.1 units in front to allow in-place head rotation
-          break;
-
-        case 'street_walk':
-          // WASD Keyboard Walking Mode
+          // Human Eye-Level Street View walking height
           pos = [0, 1.8, 25];
           look = [0, 1.8, 24.9]; // 0.1 units in front to allow in-place head rotation
           break;
@@ -129,7 +129,7 @@ export const CameraController: React.FC<CameraControllerProps> = ({
   }, [doubleClickTarget, camera]);
 
   useFrame((_, delta) => {
-    const isStreetLevel = preset === 'street' || preset === 'street_walk';
+    const isStreetLevel = preset === 'street';
 
     // 1. Smooth Camera Transition Lerp
     if (isLerping.current) {
@@ -168,8 +168,8 @@ export const CameraController: React.FC<CameraControllerProps> = ({
 
         if (keys['w']) moveVector.addScaledVector(dir, speed);
         if (keys['s']) moveVector.addScaledVector(dir, -speed);
-        if (keys['a']) moveVector.addScaledVector(right, speed);
-        if (keys['d']) moveVector.addScaledVector(right, -speed);
+        if (keys['a']) moveVector.addScaledVector(right, -speed); // Move left (negative right)
+        if (keys['d']) moveVector.addScaledVector(right, speed);  // Move right (positive right)
 
         // Compute proposed position
         const newPos = camera.position.clone().add(moveVector);
@@ -204,7 +204,7 @@ export const CameraController: React.FC<CameraControllerProps> = ({
       }
 
       // Lock height to walking eye level
-      camera.position.y = preset === 'street_walk' ? 1.8 : 3.5;
+      camera.position.y = 1.8;
     } else {
       // Normal View Keyboard Panning (WASD/Arrows)
       if (!controlsRef.current) return;
@@ -238,7 +238,7 @@ export const CameraController: React.FC<CameraControllerProps> = ({
     }
   });
 
-  const isStreetLevel = preset === 'street' || preset === 'street_walk';
+  const isStreetLevel = preset === 'street';
 
   if (isStreetLevel) {
     return <PointerLockControls />;
