@@ -25,10 +25,13 @@ interface BuildingSceneProps {
   selectedItem: SelectedItemRef | null;
   placementTool: PlacementTool;
   focusTarget?: [number, number, number] | null;
+  doubleClickTarget?: [number, number, number] | null;
   onSelectItem: (item: SelectedItemRef | null) => void;
+  onDoubleClickPoint?: (point: [number, number, number]) => void;
   onUpdateTransform: (id: string, type: 'building' | 'element', newPos: [number, number, number], newRotY: number) => void;
   onPlaceObjectAt: (pos: [number, number, number]) => void;
   canvasRef?: React.RefObject<HTMLCanvasElement>;
+  onExitStreetView?: () => void;
 }
 
 export const BuildingScene: React.FC<BuildingSceneProps> = ({
@@ -39,10 +42,13 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
   selectedItem,
   placementTool,
   focusTarget,
+  doubleClickTarget,
   onSelectItem,
+  onDoubleClickPoint,
   onUpdateTransform,
   onPlaceObjectAt,
   canvasRef,
+  onExitStreetView,
 }) => {
   const { timeOfDay, gridSnap, snapSize } = siteConfig;
 
@@ -89,8 +95,49 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
     }
   };
 
+  const handleGroundDoubleClick = (e: ThreeEvent<MouseEvent>) => {
+    e.stopPropagation();
+    if (!placementTool && onDoubleClickPoint) {
+      onDoubleClickPoint([e.point.x, e.point.y, e.point.z]);
+    }
+  };
+
+  const isStreetView = preset === 'street' || preset === 'street_walk';
+
   return (
     <div className="relative h-full w-full bg-slate-950">
+      {/* Street View UI Overlay */}
+      {isStreetView && (
+        <div className="absolute top-6 left-1/2 z-30 -translate-x-1/2 flex flex-col items-center gap-3 w-[90%] max-w-sm pointer-events-none">
+          {/* WASD + Mouse Hint */}
+          <div className="w-full glass-panel border border-amber-500/25 bg-slate-950/80 backdrop-blur-md rounded-2xl p-4 shadow-2xl flex flex-col items-center text-center animate-in fade-in slide-in-from-top-4 duration-300">
+            <div className="flex items-center gap-2 text-amber-400 font-extrabold text-xs mb-1.5 uppercase tracking-wider">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+              </span>
+              Street View Mode
+            </div>
+            <p className="text-slate-300 text-xs leading-relaxed mb-3">
+              Click on screen to lock cursor and look around. Use <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-amber-300 font-mono font-bold text-[10px]">W</kbd> <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-amber-300 font-mono font-bold text-[10px]">A</kbd> <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-amber-300 font-mono font-bold text-[10px]">S</kbd> <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-amber-300 font-mono font-bold text-[10px]">D</kbd> keys to walk.
+            </p>
+            <div className="text-[10px] text-slate-400">
+              Press <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded font-semibold">ESC</kbd> to unlock mouse cursor.
+            </div>
+          </div>
+
+          {/* Exit Street View Button */}
+          {onExitStreetView && (
+            <button
+              onClick={onExitStreetView}
+              className="pointer-events-auto flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-500 active:scale-95 text-white font-bold text-xs rounded-xl px-5 py-2.5 shadow-xl shadow-rose-950/20 transition-all border border-rose-500/20"
+            >
+              Exit Street View
+            </button>
+          )}
+        </div>
+      )}
+
       <Canvas
         ref={canvasRef}
         shadows
@@ -144,6 +191,7 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
           onPointerMove={handleGroundPointerMove}
           onPointerLeave={() => setIsPointerOverGround(false)}
           onClick={handleGroundPointerClick}
+          onDoubleClick={handleGroundDoubleClick}
           visible={false}
         >
           <planeGeometry args={[siteConfig.plotSize[0], siteConfig.plotSize[1]]} />
@@ -206,6 +254,12 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
                   onSelectItem({ id: b.id, type: 'building' });
                 }
               }}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                if (!placementTool && onDoubleClickPoint) {
+                  onDoubleClickPoint([e.point.x, e.point.y, e.point.z]);
+                }
+              }}
             >
               <ProceduralBuilding config={{ ...b.config, timeOfDay: siteConfig.timeOfDay }} />
 
@@ -261,6 +315,12 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
                   onSelectItem({ id: el.id, type: 'element' });
                 }
               }}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                if (!placementTool && onDoubleClickPoint) {
+                  onDoubleClickPoint([e.point.x, e.point.y, e.point.z]);
+                }
+              }}
             >
               <SiteElementModel
                 element={el}
@@ -309,7 +369,13 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
         />
 
         {/* Camera Controller */}
-        <CameraController preset={preset} focusTarget={focusTarget} />
+        <CameraController
+          preset={preset}
+          focusTarget={focusTarget}
+          doubleClickTarget={doubleClickTarget}
+          buildings={buildings}
+          plotSize={siteConfig.plotSize}
+        />
       </Canvas>
     </div>
   );

@@ -150,12 +150,12 @@ export const App: React.FC = () => {
     type: 'building',
   });
   const [placementTool, setPlacementTool] = useState<PlacementTool>(null);
-  const [cameraPreset, setCameraPreset] = useState<CameraPreset>('top_site');
+  const [cameraPreset, setCameraPreset] = useState<CameraPreset>('master_map');
   const [focusTarget, setFocusTarget] = useState<[number, number, number] | null>(null);
+  const [doubleClickTarget, setDoubleClickTarget] = useState<[number, number, number] | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // ESC shortcut to cancel placement mode
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -175,6 +175,11 @@ export const App: React.FC = () => {
       const target = elements.find((e) => e.id === selectedItem.id);
       if (target) setFocusTarget([...target.position]);
     }
+  };
+
+  const handleDoubleClickPoint = (point: [number, number, number]) => {
+    setDoubleClickTarget(point);
+    setTimeout(() => setDoubleClickTarget(null), 100);
   };
 
   const handlePlaceObjectAt = (pos: [number, number, number]) => {
@@ -383,7 +388,7 @@ export const App: React.FC = () => {
     setSelectedItem({ id: 'b-1', type: 'building' });
     setPlacementTool(null);
     setFocusTarget(null);
-    setCameraPreset('top_site');
+    setCameraPreset('master_map');
   };
 
   const handleCaptureScreenshot = () => {
@@ -462,6 +467,8 @@ export const App: React.FC = () => {
         selectedItem={selectedItem}
         placementTool={placementTool}
         focusTarget={focusTarget}
+        doubleClickTarget={doubleClickTarget}
+        onDoubleClickPoint={handleDoubleClickPoint}
         onSelectItem={(item) => {
           setSelectedItem(item);
           setFocusTarget(null);
@@ -470,6 +477,7 @@ export const App: React.FC = () => {
         onUpdateTransform={handleUpdateTransform}
         onPlaceObjectAt={handlePlaceObjectAt}
         canvasRef={canvasRef}
+        onExitStreetView={() => setCameraPreset('master_map')}
       />
 
       {/* Bottom Camera View Presets Bar */}
