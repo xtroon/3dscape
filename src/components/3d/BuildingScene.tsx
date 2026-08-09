@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { Canvas, ThreeEvent } from '@react-three/fiber';
 import { Sky, ContactShadows, PivotControls } from '@react-three/drei';
 import * as THREE from 'three';
@@ -24,6 +24,7 @@ interface BuildingSceneProps {
   preset: CameraPreset;
   selectedItem: SelectedItemRef | null;
   placementTool: PlacementTool;
+  focusTarget?: [number, number, number] | null;
   onSelectItem: (item: SelectedItemRef | null) => void;
   onUpdateTransform: (id: string, type: 'building' | 'element', newPos: [number, number, number], newRotY: number) => void;
   onPlaceObjectAt: (pos: [number, number, number]) => void;
@@ -37,6 +38,7 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
   preset,
   selectedItem,
   placementTool,
+  focusTarget,
   onSelectItem,
   onUpdateTransform,
   onPlaceObjectAt,
@@ -61,13 +63,11 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
   const ambientIntensity = isNight ? 0.25 : isSunset ? 0.5 : 0.7;
   const fogColor = isNight ? '#090d16' : isSunset ? '#451a03' : '#cbd5e1';
 
-  // Math helper for grid snapping
   const snap = (val: number): number => {
     if (!gridSnap || snapSize <= 0) return val;
     return Math.round(val / snapSize) * snapSize;
   };
 
-  // Pointer move handler over plot ground plane
   const handleGroundPointerMove = (e: ThreeEvent<PointerEvent>) => {
     e.stopPropagation();
     const point = e.point;
@@ -134,10 +134,10 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
           rayleigh={isSunset ? 6 : 1}
         />
 
-        {/* Master Land Plot Ground */}
+        {/* Plot Ground */}
         <PlotGround config={siteConfig} />
 
-        {/* Invisible Raycasting Ground Plane for Smooth Cursor Placement */}
+        {/* Raycasting Ground Plane */}
         <mesh
           position={[0, 0.01, 0]}
           rotation={[-Math.PI / 2, 0, 0]}
@@ -150,10 +150,9 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
           <meshBasicMaterial />
         </mesh>
 
-        {/* Interactive Placement Ghost Preview */}
+        {/* Ghost Placement Preview */}
         {placementTool && isPointerOverGround && (
           <group position={cursorPos}>
-            {/* Glowing Ground Placement Circle */}
             <mesh position={[0, 0.1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
               <ringGeometry args={[4, 5, 32]} />
               <meshBasicMaterial color="#10b981" side={THREE.DoubleSide} transparent opacity={0.8} />
@@ -195,7 +194,7 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
           </group>
         )}
 
-        {/* Ground Target Marker for Selection */}
+        {/* Selection Ground Marker */}
         {!placementTool && selectedItem && isPointerOverGround && (
           <mesh position={[cursorPos[0], 0.05, cursorPos[2]]} rotation={[-Math.PI / 2, 0, 0]}>
             <circleGeometry args={[1.2, 16]} />
@@ -203,7 +202,7 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
           </mesh>
         )}
 
-        {/* Render Buildings */}
+        {/* Buildings */}
         {buildings.map((b) => {
           const isSelected = selectedItem?.id === b.id && selectedItem?.type === 'building';
 
@@ -221,10 +220,9 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
             >
               <ProceduralBuilding config={{ ...b.config, timeOfDay: siteConfig.timeOfDay }} />
 
-              {/* Highlight Ring */}
               {isSelected && (
                 <mesh position={[0, 0.15, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-                  <ringGeometry args={[9.5, 10.5, 32]} />
+                  <ringGeometry args={[Math.max(b.config.width, b.config.depth) * 0.6, Math.max(b.config.width, b.config.depth) * 0.65, 32]} />
                   <meshBasicMaterial color="#10b981" side={THREE.DoubleSide} />
                 </mesh>
               )}
@@ -236,7 +234,7 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
               <PivotControls
                 key={`pivot-${b.id}`}
                 scale={6}
-                activeAxes={[true, false, true]} // XZ translation & Y rotation
+                activeAxes={[true, false, true]}
                 anchor={[0, 0, 0]}
                 onDrag={(matrix) => {
                   const position = new THREE.Vector3();
@@ -259,7 +257,7 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
           return buildingContent;
         })}
 
-        {/* Render Site Elements */}
+        {/* Site Elements */}
         {elements.map((el) => {
           const isSelected = selectedItem?.id === el.id && selectedItem?.type === 'element';
 
@@ -311,7 +309,6 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
           return elementContent;
         })}
 
-        {/* Ground Contact Shadows */}
         <ContactShadows
           position={[0, 0.01, 0]}
           opacity={0.65}
@@ -322,8 +319,8 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
           color="#000000"
         />
 
-        {/* Camera Controller */}
-        <CameraController preset={preset} />
+        {/* Camera Controller with focusTarget & WASD Street Walking support */}
+        <CameraController preset={preset} focusTarget={focusTarget} />
       </Canvas>
     </div>
   );

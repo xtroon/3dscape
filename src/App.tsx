@@ -151,10 +151,11 @@ export const App: React.FC = () => {
   });
   const [placementTool, setPlacementTool] = useState<PlacementTool>(null);
   const [cameraPreset, setCameraPreset] = useState<CameraPreset>('top_site');
+  const [focusTarget, setFocusTarget] = useState<[number, number, number] | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // ESC shortcut to cancel placement
+  // ESC shortcut to cancel placement mode
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -164,6 +165,17 @@ export const App: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  const handleFocusSelectedItem = () => {
+    if (!selectedItem) return;
+    if (selectedItem.type === 'building') {
+      const target = buildings.find((b) => b.id === selectedItem.id);
+      if (target) setFocusTarget([...target.position]);
+    } else {
+      const target = elements.find((e) => e.id === selectedItem.id);
+      if (target) setFocusTarget([...target.position]);
+    }
+  };
 
   const handlePlaceObjectAt = (pos: [number, number, number]) => {
     if (!placementTool) return;
@@ -370,6 +382,7 @@ export const App: React.FC = () => {
     setElements(initialElements);
     setSelectedItem({ id: 'b-1', type: 'building' });
     setPlacementTool(null);
+    setFocusTarget(null);
     setCameraPreset('top_site');
   };
 
@@ -434,6 +447,7 @@ export const App: React.FC = () => {
         onSelectItem={(item) => {
           setSelectedItem(item);
           setPlacementTool(null);
+          setFocusTarget(null);
         }}
         onDuplicateItem={handleDuplicateItem}
         onDeleteItem={handleDeleteItem}
@@ -447,8 +461,10 @@ export const App: React.FC = () => {
         preset={cameraPreset}
         selectedItem={selectedItem}
         placementTool={placementTool}
+        focusTarget={focusTarget}
         onSelectItem={(item) => {
           setSelectedItem(item);
+          setFocusTarget(null);
           if (item) setPlacementTool(null);
         }}
         onUpdateTransform={handleUpdateTransform}
@@ -459,7 +475,12 @@ export const App: React.FC = () => {
       {/* Bottom Camera View Presets Bar */}
       <ViewPresetsBar
         currentPreset={cameraPreset}
-        onSelectPreset={setCameraPreset}
+        hasSelectedItem={selectedItem !== null}
+        onSelectPreset={(p) => {
+          setCameraPreset(p);
+          setFocusTarget(null);
+        }}
+        onFocusSelectedItem={handleFocusSelectedItem}
         onResetView={handleResetView}
       />
     </div>
