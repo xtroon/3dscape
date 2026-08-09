@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Canvas, ThreeEvent } from '@react-three/fiber';
-import { Sky, ContactShadows, PivotControls } from '@react-three/drei';
+import { Sky, ContactShadows, PivotControls, Html } from '@react-three/drei';
 import * as THREE from 'three';
 
 import {
@@ -94,7 +94,7 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
       <Canvas
         ref={canvasRef}
         shadows
-        camera={{ position: [0, 140, 0.1], fov: 45 }}
+        camera={{ position: [0, 140, 0.1], fov: 48 }}
         gl={{ preserveDrawingBuffer: true, antialias: true, alpha: false }}
         className="h-full w-full cursor-grab active:cursor-grabbing"
       >
@@ -150,14 +150,27 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
           <meshBasicMaterial />
         </mesh>
 
+        {/* AAA Game-Style Cursor Coordinate Badge & Ring */}
+        {isPointerOverGround && (
+          <group position={cursorPos}>
+            {/* Glowing Ground Ring */}
+            <mesh position={[0, 0.08, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+              <ringGeometry args={[1.5, 1.8, 32]} />
+              <meshBasicMaterial color={placementTool ? '#10b981' : '#38bdf8'} side={THREE.DoubleSide} transparent opacity={0.7} />
+            </mesh>
+
+            {/* Coordinate Badge Floating Label */}
+            <Html position={[0, 1.5, 0]} center pointerEvents="none">
+              <div className="glass-pill flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-bold text-emerald-300 shadow-lg border border-emerald-500/40">
+                <span>📍 X: {cursorPos[0]}m | Z: {cursorPos[2]}m</span>
+              </div>
+            </Html>
+          </group>
+        )}
+
         {/* Ghost Placement Preview */}
         {placementTool && isPointerOverGround && (
           <group position={cursorPos}>
-            <mesh position={[0, 0.1, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-              <ringGeometry args={[4, 5, 32]} />
-              <meshBasicMaterial color="#10b981" side={THREE.DoubleSide} transparent opacity={0.8} />
-            </mesh>
-
             {placementTool === 'building' ? (
               <ProceduralBuilding
                 config={{
@@ -194,15 +207,7 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
           </group>
         )}
 
-        {/* Selection Ground Marker */}
-        {!placementTool && selectedItem && isPointerOverGround && (
-          <mesh position={[cursorPos[0], 0.05, cursorPos[2]]} rotation={[-Math.PI / 2, 0, 0]}>
-            <circleGeometry args={[1.2, 16]} />
-            <meshBasicMaterial color="#38bdf8" transparent opacity={0.3} />
-          </mesh>
-        )}
-
-        {/* Buildings */}
+        {/* Render Buildings */}
         {buildings.map((b) => {
           const isSelected = selectedItem?.id === b.id && selectedItem?.type === 'building';
 
@@ -257,7 +262,7 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
           return buildingContent;
         })}
 
-        {/* Site Elements */}
+        {/* Render Site Elements */}
         {elements.map((el) => {
           const isSelected = selectedItem?.id === el.id && selectedItem?.type === 'element';
 
@@ -319,7 +324,7 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
           color="#000000"
         />
 
-        {/* Camera Controller with focusTarget & WASD Street Walking support */}
+        {/* Camera Controller */}
         <CameraController preset={preset} focusTarget={focusTarget} />
       </Canvas>
     </div>

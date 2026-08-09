@@ -10,6 +10,7 @@ import {
   Plus,
   X,
   Sparkles,
+  Sun,
 } from 'lucide-react';
 import { PlacementTool, SiteElementType } from '../../types/building';
 
@@ -65,6 +66,12 @@ export const SitePlannerToolbar: React.FC<SitePlannerToolbarProps> = ({
       icon: <Trees className="h-4 w-4 text-emerald-400" />,
       color: 'bg-slate-800 hover:bg-slate-700 text-slate-200',
     },
+    {
+      id: 'street_light',
+      label: 'Street Lamp',
+      icon: <Sun className="h-4 w-4 text-amber-400" />,
+      color: 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-amber-500/30',
+    },
   ];
 
   return (
@@ -73,7 +80,7 @@ export const SitePlannerToolbar: React.FC<SitePlannerToolbarProps> = ({
       {placementTool && (
         <div className="glass-panel flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold text-emerald-400 border border-emerald-500/40 shadow-xl animate-pulse">
           <Sparkles className="h-3.5 w-3.5" />
-          <span>Click ground plot to place {placementTool.toUpperCase()}</span>
+          <span>Click ground plot to place {placementTool.toUpperCase().replace('_', ' ')}</span>
           <button
             onClick={() => onSelectPlacementTool(null)}
             className="ml-2 rounded-full bg-slate-800 p-0.5 hover:bg-slate-700 text-slate-300 hover:text-white"
@@ -87,7 +94,7 @@ export const SitePlannerToolbar: React.FC<SitePlannerToolbarProps> = ({
       {/* Main Placement Bar */}
       <div className="glass-panel flex items-center gap-1.5 rounded-2xl p-1.5 shadow-2xl border border-slate-700/60">
         <span className="hidden md:flex items-center gap-1 text-[11px] font-bold uppercase tracking-wider text-emerald-400 px-2.5">
-          <MapPin className="h-3.5 w-3.5" /> Placement:
+          <MapPin className="h-3.5 w-3.5" /> Placement Tools:
         </span>
 
         {tools.map((t) => {

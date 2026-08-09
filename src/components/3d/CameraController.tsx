@@ -18,11 +18,14 @@ export const CameraController: React.FC<CameraControllerProps> = ({ preset, focu
   const targetPos = useRef(new THREE.Vector3());
   const targetLook = useRef(new THREE.Vector3());
 
-  // Keyboard state for WASD street walking mode
   const keysPressed = useRef<Record<string, boolean>>({});
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ignore key events when typing inside text inputs
+      if (['input', 'textarea'].includes((e.target as HTMLElement)?.tagName?.toLowerCase())) {
+        return;
+      }
       keysPressed.current[e.key.toLowerCase()] = true;
     };
     const handleKeyUp = (e: KeyboardEvent) => {
@@ -38,23 +41,21 @@ export const CameraController: React.FC<CameraControllerProps> = ({ preset, focu
     };
   }, []);
 
-  // Update preset target positions
   useEffect(() => {
     let pos: [number, number, number] = [0, 2.8, 45];
     let look: [number, number, number] = [0, 8, 0];
 
     if (focusTarget) {
-      look = [focusTarget[0], 4, focusTarget[2]];
-      pos = [focusTarget[0], 12, focusTarget[2] + 28];
+      look = [focusTarget[0], 2, focusTarget[2]];
+      pos = [focusTarget[0], 10, focusTarget[2] + 24];
     } else {
       switch (preset) {
         case 'top_site':
-          pos = [0, 150, 0.1];
+          pos = [0, 140, 0.1];
           look = [0, 0, 0];
           break;
 
         case 'street_walk':
-          // Human Eye-Level Street Walk Mode (Height = 1.8m)
           pos = [0, 1.8, 25];
           look = [0, 2.2, 0];
           break;
@@ -89,21 +90,19 @@ export const CameraController: React.FC<CameraControllerProps> = ({ preset, focu
   useFrame((_, delta) => {
     if (!controlsRef.current) return;
 
-    // Handle WASD Keyboard Walking Navigation when in street_walk or active navigation
+    // Smooth Keyboard Navigation (WASD / Arrow Keys)
     const keys = keysPressed.current;
     if (keys['w'] || keys['s'] || keys['a'] || keys['d'] || keys['arrowup'] || keys['arrowdown'] || keys['arrowleft'] || keys['arrowright']) {
-      isLerping.current = false; // Override lerp with real-time walking input
+      isLerping.current = false;
 
-      const speed = preset === 'street_walk' ? 18.0 * delta : 30.0 * delta;
+      const speed = preset === 'street_walk' ? 16.0 * delta : 28.0 * delta;
       const moveVector = new THREE.Vector3();
 
-      // Get camera forward direction projected on ground plane
       const dir = new THREE.Vector3();
       camera.getWorldDirection(dir);
       dir.y = 0;
       dir.normalize();
 
-      // Right vector perpendicular to direction
       const right = new THREE.Vector3();
       right.crossVectors(dir, new THREE.Vector3(0, 1, 0)).normalize();
 
@@ -112,11 +111,9 @@ export const CameraController: React.FC<CameraControllerProps> = ({ preset, focu
       if (keys['d'] || keys['arrowright']) moveVector.addScaledVector(right, -speed);
       if (keys['a'] || keys['arrowleft']) moveVector.addScaledVector(right, speed);
 
-      // Move both camera and OrbitControls target together across the plot
       camera.position.add(moveVector);
       controlsRef.current.target.add(moveVector);
 
-      // In street_walk mode, lock camera Y height to human eye level (~1.8m)
       if (preset === 'street_walk') {
         camera.position.y = 1.8;
       }
@@ -125,15 +122,16 @@ export const CameraController: React.FC<CameraControllerProps> = ({ preset, focu
       return;
     }
 
-    // Camera preset smooth transition lerp
+    // Buttery Smooth Cubic Lerp for Preset & Target Transitions
     if (isLerping.current) {
-      camera.position.lerp(targetPos.current, delta * 4);
-      controlsRef.current.target.lerp(targetLook.current, delta * 4);
+      const lerpSpeed = delta * 5.5;
+      camera.position.lerp(targetPos.current, lerpSpeed);
+      controlsRef.current.target.lerp(targetLook.current, lerpSpeed);
       controlsRef.current.update();
 
       if (
-        camera.position.distanceTo(targetPos.current) < 0.2 &&
-        controlsRef.current.target.distanceTo(targetLook.current) < 0.2
+        camera.position.distanceTo(targetPos.current) < 0.1 &&
+        controlsRef.current.target.distanceTo(targetLook.current) < 0.1
       ) {
         isLerping.current = false;
       }
@@ -143,13 +141,15 @@ export const CameraController: React.FC<CameraControllerProps> = ({ preset, focu
   return (
     <OrbitControls
       ref={controlsRef}
-      enableDamping
-      dampingFactor={0.05}
-      enablePan={true} // Allow panning across the entire 200m x 200m land plot!
-      screenSpacePanning={false} // Pan along ground plane XZ
-      panSpeed={1.5}
-      maxPolarAngle={preset === 'street_walk' ? Math.PI / 2 - 0.001 : Math.PI / 2 - 0.01}
-      minDistance={1.2} // Allow coming close up to any street lamp, tree, or building facade
+      enableDamping={true}
+      dampingFactor={0.08} // Buttery smooth fluid damping
+      rotateSpeed={0.8}
+      zoomSpeed={1.1}
+      enablePan={true}
+      screenSpacePanning={false} // Pan along ground plane naturally
+      panSpeed={1.4}
+      maxPolarAngle={preset === 'street_walk' ? Math.PI / 2 - 0.001 : Math.PI / 2 - 0.02}
+      minDistance={1.2}
       maxDistance={280}
       target={[0, 0, 0]}
     />
