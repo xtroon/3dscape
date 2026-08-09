@@ -172,6 +172,21 @@ export const ProceduralBuilding: React.FC<BuildingProps> = ({ config }) => {
             <boxGeometry args={[entranceWidth + 1.2, 0.3, 1.8]} />
           </mesh>
 
+          {/* Active Canopy SpotLight */}
+          {(timeOfDay === 'night' || timeOfDay === 'sunset') && (
+            <spotLight
+              position={[0, 1.35, 0.6]}
+              intensity={timeOfDay === 'night' ? 22 : 10}
+              color="#fef08a" // Warm glow
+              distance={10}
+              angle={Math.PI / 3}
+              penumbra={0.7}
+              decay={1.8}
+              castShadow
+              shadow-bias={-0.0002}
+            />
+          )}
+
           {/* Pillars */}
           <mesh castShadow position={[-entranceWidth / 2 - 0.2, -0.2, 1.2]} material={materials.doorFrameMat}>
             <boxGeometry args={[0.4, 3.6, 0.4]} />
@@ -212,50 +227,144 @@ export const ProceduralBuilding: React.FC<BuildingProps> = ({ config }) => {
             {showWindows && (
               <group>
                 {/* Front Windows */}
-                {frontWindowPositions.map((xPos, idx) => (
-                  <group key={`front-win-${idx}`} position={[xPos, 0.1, buildingDepth / 2 + 0.05]}>
-                    <mesh material={materials.doorFrameMat}>
-                      <boxGeometry args={[2.0, 2.0, 0.12]} />
-                    </mesh>
-                    <mesh material={materials.windowGlassMat}>
-                      <boxGeometry args={[1.8, 1.8, 0.15]} />
-                    </mesh>
-                  </group>
-                ))}
+                {frontWindowPositions.map((xPos, idx) => {
+                  const hash = Math.sin(floor.index * 12.9898 + idx * 78.233 + 1.5) * 43758.5453;
+                  const rand = hash - Math.floor(hash);
+                  const isLit = rand > 0.35;
+                  const isDim = !isLit && rand > 0.15;
+                  const emissiveVal = isLit
+                    ? (timeOfDay === 'night' ? 1.0 : 0.4)
+                    : isDim
+                    ? (timeOfDay === 'night' ? 0.25 : 0.1)
+                    : 0.0;
+
+                  return (
+                    <group key={`front-win-${idx}`} position={[xPos, 0.1, buildingDepth / 2 + 0.05]}>
+                      <mesh material={materials.doorFrameMat}>
+                        <boxGeometry args={[2.0, 2.0, 0.12]} />
+                      </mesh>
+                      <mesh>
+                        <boxGeometry args={[1.8, 1.8, 0.15]} />
+                        <meshPhysicalMaterial
+                          color={windowColor}
+                          roughness={0.1}
+                          metalness={0.8}
+                          transmission={0.5}
+                          transparent
+                          opacity={0.8}
+                          reflectivity={0.9}
+                          emissive={emissiveVal > 0 ? (timeOfDay === 'night' ? new THREE.Color('#fef08a') : new THREE.Color('#fed7aa')) : new THREE.Color('#000000')}
+                          emissiveIntensity={emissiveVal}
+                        />
+                      </mesh>
+                    </group>
+                  );
+                })}
 
                 {/* Back Windows */}
-                {frontWindowPositions.map((xPos, idx) => (
-                  <group key={`back-win-${idx}`} position={[xPos, 0.1, -buildingDepth / 2 - 0.05]}>
-                    <mesh material={materials.doorFrameMat}>
-                      <boxGeometry args={[2.0, 2.0, 0.12]} />
-                    </mesh>
-                    <mesh material={materials.windowGlassMat}>
-                      <boxGeometry args={[1.8, 1.8, 0.15]} />
-                    </mesh>
-                  </group>
-                ))}
+                {frontWindowPositions.map((xPos, idx) => {
+                  const hash = Math.sin(floor.index * 12.9898 + idx * 78.233 + 2.5) * 43758.5453;
+                  const rand = hash - Math.floor(hash);
+                  const isLit = rand > 0.35;
+                  const isDim = !isLit && rand > 0.15;
+                  const emissiveVal = isLit
+                    ? (timeOfDay === 'night' ? 1.0 : 0.4)
+                    : isDim
+                    ? (timeOfDay === 'night' ? 0.25 : 0.1)
+                    : 0.0;
 
-                {/* Side Windows */}
-                {sideWindowPositions.map((zPos, idx) => (
-                  <group key={`side-win-left-${idx}`} position={[-buildingWidth / 2 - 0.05, 0.1, zPos]}>
-                    <mesh material={materials.doorFrameMat}>
-                      <boxGeometry args={[0.12, 1.8, 1.8]} />
-                    </mesh>
-                    <mesh material={materials.windowGlassMat}>
-                      <boxGeometry args={[0.15, 1.6, 1.6]} />
-                    </mesh>
-                  </group>
-                ))}
-                {sideWindowPositions.map((zPos, idx) => (
-                  <group key={`side-win-right-${idx}`} position={[buildingWidth / 2 + 0.05, 0.1, zPos]}>
-                    <mesh material={materials.doorFrameMat}>
-                      <boxGeometry args={[0.12, 1.8, 1.8]} />
-                    </mesh>
-                    <mesh material={materials.windowGlassMat}>
-                      <boxGeometry args={[0.15, 1.6, 1.6]} />
-                    </mesh>
-                  </group>
-                ))}
+                  return (
+                    <group key={`back-win-${idx}`} position={[xPos, 0.1, -buildingDepth / 2 - 0.05]}>
+                      <mesh material={materials.doorFrameMat}>
+                        <boxGeometry args={[2.0, 2.0, 0.12]} />
+                      </mesh>
+                      <mesh>
+                        <boxGeometry args={[1.8, 1.8, 0.15]} />
+                        <meshPhysicalMaterial
+                          color={windowColor}
+                          roughness={0.1}
+                          metalness={0.8}
+                          transmission={0.5}
+                          transparent
+                          opacity={0.8}
+                          reflectivity={0.9}
+                          emissive={emissiveVal > 0 ? (timeOfDay === 'night' ? new THREE.Color('#fef08a') : new THREE.Color('#fed7aa')) : new THREE.Color('#000000')}
+                          emissiveIntensity={emissiveVal}
+                        />
+                      </mesh>
+                    </group>
+                  );
+                })}
+
+                {/* Side Windows (Left) */}
+                {sideWindowPositions.map((zPos, idx) => {
+                  const hash = Math.sin(floor.index * 12.9898 + idx * 78.233 + 3.5) * 43758.5453;
+                  const rand = hash - Math.floor(hash);
+                  const isLit = rand > 0.35;
+                  const isDim = !isLit && rand > 0.15;
+                  const emissiveVal = isLit
+                    ? (timeOfDay === 'night' ? 1.0 : 0.4)
+                    : isDim
+                    ? (timeOfDay === 'night' ? 0.25 : 0.1)
+                    : 0.0;
+
+                  return (
+                    <group key={`side-win-left-${idx}`} position={[-buildingWidth / 2 - 0.05, 0.1, zPos]}>
+                      <mesh material={materials.doorFrameMat}>
+                        <boxGeometry args={[0.12, 1.8, 1.8]} />
+                      </mesh>
+                      <mesh>
+                        <boxGeometry args={[0.15, 1.6, 1.6]} />
+                        <meshPhysicalMaterial
+                          color={windowColor}
+                          roughness={0.1}
+                          metalness={0.8}
+                          transmission={0.5}
+                          transparent
+                          opacity={0.8}
+                          reflectivity={0.9}
+                          emissive={emissiveVal > 0 ? (timeOfDay === 'night' ? new THREE.Color('#fef08a') : new THREE.Color('#fed7aa')) : new THREE.Color('#000000')}
+                          emissiveIntensity={emissiveVal}
+                        />
+                      </mesh>
+                    </group>
+                  );
+                })}
+
+                {/* Side Windows (Right) */}
+                {sideWindowPositions.map((zPos, idx) => {
+                  const hash = Math.sin(floor.index * 12.9898 + idx * 78.233 + 4.5) * 43758.5453;
+                  const rand = hash - Math.floor(hash);
+                  const isLit = rand > 0.35;
+                  const isDim = !isLit && rand > 0.15;
+                  const emissiveVal = isLit
+                    ? (timeOfDay === 'night' ? 1.0 : 0.4)
+                    : isDim
+                    ? (timeOfDay === 'night' ? 0.25 : 0.1)
+                    : 0.0;
+
+                  return (
+                    <group key={`side-win-right-${idx}`} position={[buildingWidth / 2 + 0.05, 0.1, zPos]}>
+                      <mesh material={materials.doorFrameMat}>
+                        <boxGeometry args={[0.12, 1.8, 1.8]} />
+                      </mesh>
+                      <mesh>
+                        <boxGeometry args={[0.15, 1.6, 1.6]} />
+                        <meshPhysicalMaterial
+                          color={windowColor}
+                          roughness={0.1}
+                          metalness={0.8}
+                          transmission={0.5}
+                          transparent
+                          opacity={0.8}
+                          reflectivity={0.9}
+                          emissive={emissiveVal > 0 ? (timeOfDay === 'night' ? new THREE.Color('#fef08a') : new THREE.Color('#fed7aa')) : new THREE.Color('#000000')}
+                          emissiveIntensity={emissiveVal}
+                        />
+                      </mesh>
+                    </group>
+                  );
+                })}
               </group>
             )}
 

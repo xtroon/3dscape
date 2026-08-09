@@ -69,7 +69,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   onDuplicateItem,
   onDeleteItem,
 }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
 
   const selectedBuilding =
     selectedItem?.type === 'building'

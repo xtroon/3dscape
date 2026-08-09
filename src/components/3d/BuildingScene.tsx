@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Canvas, ThreeEvent } from '@react-three/fiber';
 import { Sky, ContactShadows, PivotControls } from '@react-three/drei';
 import * as THREE from 'three';
@@ -51,6 +51,23 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
   onExitStreetView,
 }) => {
   const { timeOfDay, gridSnap, snapSize } = siteConfig;
+  const [virtualKeys, setVirtualKeys] = useState({ w: false, a: false, s: false, d: false });
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const isTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+      const isMobileUA = /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+      setIsMobile(window.innerWidth < 768 || (isTouch && isMobileUA));
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  const handleVirtualKey = (key: 'w' | 'a' | 's' | 'd', isPressed: boolean) => {
+    setVirtualKeys((prev) => ({ ...prev, [key]: isPressed }));
+  };
 
   const [cursorPos, setCursorPos] = useState<[number, number, number]>([0, 0, 0]);
   const [isPointerOverGround, setIsPointerOverGround] = useState(false);
@@ -59,15 +76,16 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
   const isSunset = timeOfDay === 'sunset';
 
   const sunPosition: [number, number, number] = isNight
-    ? [-100, -20, -100]
+    ? [30, 80, 30] // Moon position overhead
     : isSunset
-    ? [100, 10, -50]
+    ? [100, 12, -50] // Low sun position
     : [60, 80, 50];
 
-  const sunColor = isNight ? '#38bdf8' : isSunset ? '#fb923c' : '#ffffff';
-  const dirLightIntensity = isNight ? 0.35 : isSunset ? 1.6 : 2.2;
-  const ambientIntensity = isNight ? 0.25 : isSunset ? 0.5 : 0.7;
-  const fogColor = isNight ? '#090d16' : isSunset ? '#451a03' : '#cbd5e1';
+  const sunColor = isNight ? '#bae6fd' : isSunset ? '#f97316' : '#ffffff';
+  const dirLightIntensity = isNight ? 0.08 : isSunset ? 1.8 : 2.2;
+  const ambientIntensity = isNight ? 0.22 : isSunset ? 0.4 : 0.7;
+  const ambientColor = isNight ? '#1e293b' : isSunset ? '#fed7aa' : '#ffffff';
+  const fogColor = isNight ? '#030712' : isSunset ? '#1a0d00' : '#cbd5e1';
 
   const snap = (val: number): number => {
     if (!gridSnap || snapSize <= 0) return val;
@@ -135,6 +153,62 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
               </p>
             </div>
           </div>
+
+          {/* Bottom-Center Virtual D-Pad for Mobile Walking */}
+          {isMobile && (
+            <div className="absolute bottom-8 left-1/2 z-40 -translate-x-1/2 pointer-events-auto flex flex-col items-center gap-1.5">
+              <div className="flex flex-col items-center gap-2 bg-slate-950/80 backdrop-blur-md border border-slate-700/50 rounded-3xl p-3 shadow-2xl">
+                {/* Up Button */}
+                <button
+                  onPointerDown={() => handleVirtualKey('w', true)}
+                  onPointerUp={() => handleVirtualKey('w', false)}
+                  onPointerLeave={() => handleVirtualKey('w', false)}
+                  onTouchStart={(e) => { e.preventDefault(); handleVirtualKey('w', true); }}
+                  onTouchEnd={(e) => { e.preventDefault(); handleVirtualKey('w', false); }}
+                  className="w-11 h-11 flex items-center justify-center bg-slate-800 active:bg-emerald-600 rounded-2xl border border-slate-700/60 shadow-lg text-white font-bold select-none text-base transition-all active:scale-90"
+                  title="Walk Forward (W)"
+                >
+                  ▲
+                </button>
+                {/* Left / Down / Right Row */}
+                <div className="flex items-center gap-2">
+                  <button
+                    onPointerDown={() => handleVirtualKey('a', true)}
+                    onPointerUp={() => handleVirtualKey('a', false)}
+                    onPointerLeave={() => handleVirtualKey('a', false)}
+                    onTouchStart={(e) => { e.preventDefault(); handleVirtualKey('a', true); }}
+                    onTouchEnd={(e) => { e.preventDefault(); handleVirtualKey('a', false); }}
+                    className="w-11 h-11 flex items-center justify-center bg-slate-800 active:bg-emerald-600 rounded-2xl border border-slate-700/60 shadow-lg text-white font-bold select-none text-base transition-all active:scale-90"
+                    title="Strafe Left (A)"
+                  >
+                    ◀
+                  </button>
+                  <button
+                    onPointerDown={() => handleVirtualKey('s', true)}
+                    onPointerUp={() => handleVirtualKey('s', false)}
+                    onPointerLeave={() => handleVirtualKey('s', false)}
+                    onTouchStart={(e) => { e.preventDefault(); handleVirtualKey('s', true); }}
+                    onTouchEnd={(e) => { e.preventDefault(); handleVirtualKey('s', false); }}
+                    className="w-11 h-11 flex items-center justify-center bg-slate-800 active:bg-emerald-600 rounded-2xl border border-slate-700/60 shadow-lg text-white font-bold select-none text-base transition-all active:scale-90"
+                    title="Walk Backward (S)"
+                  >
+                    ▼
+                  </button>
+                  <button
+                    onPointerDown={() => handleVirtualKey('d', true)}
+                    onPointerUp={() => handleVirtualKey('d', false)}
+                    onPointerLeave={() => handleVirtualKey('d', false)}
+                    onTouchStart={(e) => { e.preventDefault(); handleVirtualKey('d', true); }}
+                    onTouchEnd={(e) => { e.preventDefault(); handleVirtualKey('d', false); }}
+                    className="w-11 h-11 flex items-center justify-center bg-slate-800 active:bg-emerald-600 rounded-2xl border border-slate-700/60 shadow-lg text-white font-bold select-none text-base transition-all active:scale-90"
+                    title="Strafe Right (D)"
+                  >
+                    ▶
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
 
@@ -149,18 +223,18 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
         <fog attach="fog" args={[fogColor, 60, 260]} />
 
         {/* Lighting */}
-        <ambientLight intensity={ambientIntensity} color={sunColor} />
+        <ambientLight intensity={ambientIntensity} color={ambientColor} />
         <hemisphereLight
-          intensity={isNight ? 0.2 : isSunset ? 0.4 : 0.6}
-          color={isNight ? '#1e293b' : isSunset ? '#fdba74' : '#bae6fd'}
-          groundColor={isNight ? '#020617' : isSunset ? '#451a03' : '#14532d'}
+          intensity={isNight ? 0.15 : isSunset ? 0.3 : 0.6}
+          color={isNight ? '#bae6fd' : isSunset ? '#fdba74' : '#bae6fd'}
+          groundColor={isNight ? '#020617' : isSunset ? '#2a1200' : '#14532d'}
         />
 
         <directionalLight
           position={sunPosition}
           intensity={dirLightIntensity}
           color={sunColor}
-          castShadow
+          castShadow={!isNight}
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
           shadow-camera-near={0.5}
@@ -376,6 +450,8 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
           buildings={buildings}
           plotSize={siteConfig.plotSize}
           onExitStreetView={onExitStreetView}
+          virtualKeys={virtualKeys}
+          isMobile={isMobile}
         />
       </Canvas>
     </div>

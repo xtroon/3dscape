@@ -16,6 +16,24 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
   const isNight = timeOfDay === 'night';
   const isSunset = timeOfDay === 'sunset';
 
+  const beamTexture = useMemo(() => {
+    if (typeof document === 'undefined') return null;
+    const canvas = document.createElement('canvas');
+    canvas.width = 16;
+    canvas.height = 256;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    const gradient = ctx.createLinearGradient(0, 0, 0, 256);
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 1.0)');
+    gradient.addColorStop(0.2, 'rgba(255, 255, 255, 0.55)');
+    gradient.addColorStop(0.6, 'rgba(255, 255, 255, 0.18)');
+    gradient.addColorStop(1.0, 'rgba(255, 255, 255, 0.0)');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 16, 256);
+    const tex = new THREE.CanvasTexture(canvas);
+    return tex;
+  }, []);
+
   const width = element.width || (element.type === 'road' ? 30 : element.type === 'parking' ? 20 : 14);
   const depth = element.depth || (element.type === 'road' ? 8 : element.type === 'parking' ? 14 : 10);
 
@@ -39,7 +57,11 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
         <group>
           <mesh receiveShadow position={[0, 0.04, 0]}>
             <boxGeometry args={[width, 0.08, depth]} />
-            <meshStandardMaterial color="#1e293b" roughness={0.8} />
+            <meshStandardMaterial
+              color="#1e293b"
+              roughness={isNight || isSunset ? 0.4 : 0.8}
+              metalness={isNight || isSunset ? 0.2 : 0.0}
+            />
           </mesh>
 
           {bayPositions.map((x, i) => (
@@ -103,6 +125,16 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
             />
           </mesh>
 
+          {(isNight || isSunset) && (
+            <pointLight
+              position={[0, 0.25, 0]}
+              color="#38bdf8"
+              intensity={isNight ? 18.0 : 8.0}
+              distance={Math.max(14, width * 1.5)}
+              decay={1.8}
+            />
+          )}
+
           <mesh position={[0, 0.21, 0]}>
             <boxGeometry args={[waterW + 0.2, 0.02, waterD + 0.2]} />
             <meshStandardMaterial color="#38bdf8" roughness={0.3} />
@@ -139,7 +171,11 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
         <group>
           <mesh receiveShadow position={[0, 0.03, 0]}>
             <boxGeometry args={[width, 0.06, depth]} />
-            <meshStandardMaterial color="#1e293b" roughness={0.8} />
+            <meshStandardMaterial
+              color="#1e293b"
+              roughness={isNight || isSunset ? 0.35 : 0.8}
+              metalness={isNight || isSunset ? 0.3 : 0.0}
+            />
           </mesh>
 
           {dashPositions.map((x, i) => (
@@ -295,15 +331,33 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
               <mesh position={[0, height + 0.3, 0.8]} material={lampGlowMaterial}>
                 <boxGeometry args={[0.4, 0.2, 0.6]} />
               </mesh>
+              {/* Volumetric Light Beam Mesh */}
+              {(isNight || isSunset) && (
+                <mesh position={[0, height / 2, 0.8]}>
+                  <coneGeometry args={[height * 0.24, height, 16, 1, true]} />
+                  <meshBasicMaterial
+                     color={lightColor}
+                     map={beamTexture || undefined}
+                     transparent
+                     opacity={isNight ? 0.35 : 0.12}
+                     blending={THREE.AdditiveBlending}
+                     depthWrite={false}
+                     side={THREE.DoubleSide}
+                  />
+                </mesh>
+              )}
               {/* Active Illumination Source */}
               {(isNight || isSunset) && (
-                <pointLight
+                <spotLight
                   position={[0, height + 0.2, 0.8]}
-                  intensity={isNight ? lightIntensity : lightIntensity * 0.5}
+                  intensity={isNight ? lightIntensity * 3.0 : lightIntensity * 1.5}
                   color={lightColor}
-                  distance={Math.max(12, height * 2.8)}
-                  decay={2}
+                  distance={Math.max(16, height * 3.2)}
+                  angle={Math.PI / 3.8}
+                  penumbra={0.65}
+                  decay={1.8}
                   castShadow
+                  shadow-bias={-0.0005}
                 />
               )}
             </group>

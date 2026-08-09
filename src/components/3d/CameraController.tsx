@@ -12,6 +12,8 @@ interface CameraControllerProps {
   buildings?: SiteBuilding[];
   plotSize?: [number, number];
   onExitStreetView?: () => void;
+  virtualKeys?: { w: boolean; a: boolean; s: boolean; d: boolean };
+  isMobile?: boolean;
 }
 
 export const CameraController: React.FC<CameraControllerProps> = ({
@@ -21,6 +23,8 @@ export const CameraController: React.FC<CameraControllerProps> = ({
   buildings,
   plotSize,
   onExitStreetView,
+  virtualKeys,
+  isMobile,
 }) => {
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const { camera } = useThree();
@@ -32,6 +36,18 @@ export const CameraController: React.FC<CameraControllerProps> = ({
   const keysPressed = useRef<Record<string, boolean>>({});
 
   const [isModifierPressed, setIsModifierPressed] = useState(false);
+
+  const presetRef = useRef(preset);
+  const buildingsRef = useRef(buildings);
+  const plotSizeRef = useRef(plotSize);
+  const virtualKeysRef = useRef(virtualKeys);
+  const isMobileRef = useRef(isMobile);
+
+  useEffect(() => { presetRef.current = preset; }, [preset]);
+  useEffect(() => { buildingsRef.current = buildings; }, [buildings]);
+  useEffect(() => { plotSizeRef.current = plotSize; }, [plotSize]);
+  useEffect(() => { virtualKeysRef.current = virtualKeys; }, [virtualKeys]);
+  useEffect(() => { isMobileRef.current = isMobile; }, [isMobile]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -65,12 +81,17 @@ export const CameraController: React.FC<CameraControllerProps> = ({
     };
   }, []);
 
+  const wasLocked = useRef(false);
+
   useEffect(() => {
     const handleLockChange = () => {
-      if (document.pointerLockElement) {
+      const locked = !!document.pointerLockElement;
+      if (locked) {
+        wasLocked.current = true;
         isLerping.current = false;
-      } else if (preset === 'street') {
-        if (onExitStreetView) {
+      } else if (wasLocked.current) {
+        wasLocked.current = false;
+        if (preset === 'street' && onExitStreetView) {
           onExitStreetView();
         }
       }
@@ -129,7 +150,8 @@ export const CameraController: React.FC<CameraControllerProps> = ({
   }, [doubleClickTarget, camera]);
 
   useFrame((_, delta) => {
-    const isStreetLevel = preset === 'street';
+    const currentPreset = presetRef.current;
+    const isStreetLevel = currentPreset === 'street';
 
     // 1. Smooth Camera Transition Lerp
     if (isLerping.current) {
@@ -151,7 +173,10 @@ export const CameraController: React.FC<CameraControllerProps> = ({
     // 2. Navigation Inputs
     if (isStreetLevel) {
       // First Person WASD Walking with Collision
-      const keys = keysPressed.current;
+      const keys = {
+        ...keysPressed.current,
+        ...(virtualKeysRef.current || {}),
+      };
       if (keys['w'] || keys['s'] || keys['a'] || keys['d']) {
         isLerping.current = false;
 
@@ -175,17 +200,19 @@ export const CameraController: React.FC<CameraControllerProps> = ({
         const newPos = camera.position.clone().add(moveVector);
 
         // Boundary checks (plotSize)
-        if (plotSize) {
-          const halfWidth = plotSize[0] / 2;
-          const halfDepth = plotSize[1] / 2;
+        const currentPlotSize = plotSizeRef.current;
+        if (currentPlotSize) {
+          const halfWidth = currentPlotSize[0] / 2;
+          const halfDepth = currentPlotSize[1] / 2;
           newPos.x = Math.max(-halfWidth, Math.min(halfWidth, newPos.x));
           newPos.z = Math.max(-halfDepth, Math.min(halfDepth, newPos.z));
         }
 
         // Bounding-sphere collision detection with buildings
         let collision = false;
-        if (buildings) {
-          for (const b of buildings) {
+        const currentBuildings = buildingsRef.current;
+        if (currentBuildings) {
+          for (const b of currentBuildings) {
             const dx = newPos.x - b.position[0];
             const dz = newPos.z - b.position[2];
             const distSq = dx * dx + dz * dz;
@@ -199,12 +226,21 @@ export const CameraController: React.FC<CameraControllerProps> = ({
         }
 
         if (!collision) {
-          camera.position.copy(newPos);
+          if (controlsRef.current) {
+            camera.position.add(moveVector);
+            controlsRef.current.target.add(moveVector);
+            controlsRef.current.update();
+          } else {
+            camera.position.copy(newPos);
+          }
         }
       }
 
       // Lock height to walking eye level
       camera.position.y = 1.8;
+      if (controlsRef.current) {
+        controlsRef.current.target.y = 1.8;
+      }
     } else {
       // Normal View Keyboard Panning (WASD/Arrows)
       if (!controlsRef.current) return;
@@ -240,7 +276,7 @@ export const CameraController: React.FC<CameraControllerProps> = ({
 
   const isStreetLevel = preset === 'street';
 
-  if (isStreetLevel) {
+  if (isStreetLevel && !isMobile) {
     return <PointerLockControls />;
   }
 
@@ -249,12 +285,14 @@ export const CameraController: React.FC<CameraControllerProps> = ({
       ref={controlsRef}
       enableDamping={true}
       dampingFactor={0.08} // Smooth fluid inertia glide
-      rotateSpeed={0.8}
+      rotateSpeed={isStreetLevel ? 0.45 : 0.8}
       zoomSpeed={1.2}
-      enablePan={true} // Free ground panning like Google Maps / Earth
+      enableZoom={!isStreetLevel}
+      enablePan={!isStreetLevel}
       screenSpacePanning={false} // Pan along XZ ground plane naturally
       panSpeed={1.8}
-      maxPolarAngle={Math.PI / 2 - 0.02}
+      maxPolarAngle={isStreetLevel ? Math.PI / 1.75 : Math.PI / 2.1}
+      minPolarAngle={isStreetLevel ? Math.PI / 2.45 : 0}
       minDistance={1.2}
       maxDistance={300}
       onStart={() => {

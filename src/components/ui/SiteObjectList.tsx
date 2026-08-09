@@ -33,7 +33,7 @@ export const SiteObjectList: React.FC<SiteObjectListProps> = ({
   onDuplicateItem,
   onDeleteItem,
 }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(() => typeof window !== 'undefined' && window.innerWidth < 768);
 
   return (
     <div
