@@ -36,8 +36,11 @@ export interface SiteElement {
   name: string;
   position: [number, number, number];
   rotationY: number;
-  width?: number; // Custom measurement width in meters
+  width?: number; // Custom measurement width/height in meters
   depth?: number; // Custom measurement depth/length in meters
+  lightColor?: string; // Hex light color for street lamps (e.g. #fbbf24)
+  lightIntensity?: number; // Light brightness (e.g. 5 to 40)
+  headType?: 'single' | 'double' | 'quad'; // Fixture head count
 }
 
 export interface SelectedItemRef {

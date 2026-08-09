@@ -28,7 +28,6 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
 
   switch (element.type) {
     case 'parking': {
-      // Dynamic bay line positions based on custom width
       const bayCount = Math.max(2, Math.floor(width / 4));
       const bayPositions: number[] = [];
       const baySpacing = width / bayCount;
@@ -38,13 +37,11 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
 
       return (
         <group>
-          {/* Parking Asphalt Pad */}
           <mesh receiveShadow position={[0, 0.04, 0]}>
             <boxGeometry args={[width, 0.08, depth]} />
             <meshStandardMaterial color="#1e293b" roughness={0.8} />
           </mesh>
 
-          {/* Dynamic White Bay Stripe Lines */}
           {bayPositions.map((x, i) => (
             <mesh key={`bay-${i}`} position={[x, 0.09, 0]}>
               <boxGeometry args={[0.15, 0.01, depth - 2]} />
@@ -52,9 +49,8 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
             </mesh>
           ))}
 
-          {/* Parked 3D Cars in Bay Stalls */}
           {bayPositions.slice(0, -1).map((x, i) => {
-            if (i % 2 !== 0) return null; // Park cars in alternating stalls
+            if (i % 2 !== 0) return null;
             const posX = x + baySpacing / 2;
             const carColors = ['#1e3a8a', '#f8fafc', '#dc2626', '#047857', '#d97706'];
             const carColor = carColors[i % carColors.length];
@@ -89,13 +85,11 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
 
       return (
         <group>
-          {/* Deck Surround */}
           <mesh receiveShadow castShadow position={[0, 0.1, 0]}>
             <boxGeometry args={[width, 0.2, depth]} />
             <meshStandardMaterial color="#f1f5f9" roughness={0.4} />
           </mesh>
 
-          {/* Water Pool Basin */}
           <mesh receiveShadow position={[0, 0.05, 0]}>
             <boxGeometry args={[waterW, 0.22, waterD]} />
             <meshPhysicalMaterial
@@ -109,13 +103,11 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
             />
           </mesh>
 
-          {/* Tile Border */}
           <mesh position={[0, 0.21, 0]}>
             <boxGeometry args={[waterW + 0.2, 0.02, waterD + 0.2]} />
             <meshStandardMaterial color="#38bdf8" roughness={0.3} />
           </mesh>
 
-          {/* Lounger Chairs */}
           {[-width / 4, 0, width / 4].map((x, i) => (
             <group key={`lounger-${i}`} position={[x, 0.3, depth / 2 - 1]}>
               <mesh castShadow>
@@ -145,13 +137,11 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
 
       return (
         <group>
-          {/* Asphalt Strip */}
           <mesh receiveShadow position={[0, 0.03, 0]}>
             <boxGeometry args={[width, 0.06, depth]} />
             <meshStandardMaterial color="#1e293b" roughness={0.8} />
           </mesh>
 
-          {/* Center White Dashes */}
           {dashPositions.map((x, i) => (
             <mesh key={`dash-${i}`} position={[x, 0.07, 0]}>
               <boxGeometry args={[dashSpacing * 0.6, 0.01, 0.25]} />
@@ -172,7 +162,6 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
     case 'park': {
       return (
         <group>
-          {/* Park Grass Pad */}
           <mesh receiveShadow position={[0, 0.05, 0]}>
             <boxGeometry args={[width, 0.1, depth]} />
             <meshStandardMaterial
@@ -181,7 +170,6 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
             />
           </mesh>
 
-          {/* Fountain Basin */}
           <mesh castShadow receiveShadow position={[0, 0.4, 0]}>
             <cylinderGeometry args={[Math.min(3, width * 0.2), Math.min(3.3, width * 0.22), 0.6, 16]} />
             <meshStandardMaterial color="#cbd5e1" roughness={0.5} />
@@ -264,38 +252,66 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
     }
 
     case 'street_light': {
+      const height = element.width || 5.5; // Customizable Pole Height (4m - 12m)
+      const lightColor = element.lightColor || '#fbbf24'; // Customizable Bulb Color
+      const lightIntensity = element.lightIntensity !== undefined ? element.lightIntensity : 18; // Customizable Brightness
+      const headType = element.headType || 'single'; // Single, Double, Quad head
+
+      const lampGlowMaterial = new THREE.MeshStandardMaterial({
+        color: lightColor,
+        emissive: isNight || isSunset ? new THREE.Color(lightColor) : new THREE.Color('#ffffff'),
+        emissiveIntensity: isNight ? 2.5 : isSunset ? 1.2 : 0.2,
+      });
+
+      const lampPoleMat = new THREE.MeshStandardMaterial({
+        color: '#334155',
+        roughness: 0.3,
+        metalness: 0.8,
+      });
+
+      // Fixture arm offsets based on head configuration
+      const armAngles =
+        headType === 'quad'
+          ? [0, Math.PI / 2, Math.PI, -Math.PI / 2]
+          : headType === 'double'
+          ? [0, Math.PI]
+          : [0];
+
       return (
         <group>
-          <mesh castShadow position={[0, 2.5, 0]}>
-            <cylinderGeometry args={[0.08, 0.12, 5, 8]} />
-            <meshStandardMaterial color="#334155" roughness={0.3} metalness={0.8} />
+          {/* Customizable Pole Height */}
+          <mesh castShadow position={[0, height / 2, 0]} material={lampPoleMat}>
+            <cylinderGeometry args={[0.08, 0.14, height, 8]} />
           </mesh>
-          <mesh position={[0, 5.0, 0.4]} rotation={[0.4, 0, 0]}>
-            <cylinderGeometry args={[0.05, 0.05, 1.2, 8]} />
-            <meshStandardMaterial color="#334155" roughness={0.3} metalness={0.8} />
-          </mesh>
-          <mesh position={[0, 5.3, 0.8]}>
-            <boxGeometry args={[0.4, 0.2, 0.6]} />
-            <meshStandardMaterial
-              color="#fef08a"
-              emissive={isNight || isSunset ? new THREE.Color('#fef08a') : new THREE.Color('#ffffff')}
-              emissiveIntensity={isNight ? 2.0 : isSunset ? 1.0 : 0.2}
-            />
-          </mesh>
-          {(isNight || isSunset) && (
-            <pointLight
-              position={[0, 5.2, 0.8]}
-              intensity={isNight ? 18 : 10}
-              color="#fbbf24"
-              distance={16}
-              decay={2}
-              castShadow
-            />
-          )}
+
+          {/* Fixture Arms & Glowing Lamps */}
+          {armAngles.map((angle, i) => (
+            <group key={`head-${i}`} rotation={[0, angle, 0]}>
+              {/* Arched Arm */}
+              <mesh position={[0, height, 0.4]} rotation={[0.4, 0, 0]} material={lampPoleMat}>
+                <cylinderGeometry args={[0.05, 0.05, 1.2, 8]} />
+              </mesh>
+              {/* Fixture Bulb Head */}
+              <mesh position={[0, height + 0.3, 0.8]} material={lampGlowMaterial}>
+                <boxGeometry args={[0.4, 0.2, 0.6]} />
+              </mesh>
+              {/* Active Illumination Source */}
+              {(isNight || isSunset) && (
+                <pointLight
+                  position={[0, height + 0.2, 0.8]}
+                  intensity={isNight ? lightIntensity : lightIntensity * 0.5}
+                  color={lightColor}
+                  distance={Math.max(12, height * 2.8)}
+                  decay={2}
+                  castShadow
+                />
+              )}
+            </group>
+          ))}
 
           {isSelected && (
-            <mesh position={[0, 2.7, 0.4]}>
-              <cylinderGeometry args={[0.8, 0.8, 5.5, 8]} />
+            <mesh position={[0, height / 2, 0]}>
+              <cylinderGeometry args={[1.0, 1.0, height + 1.0, 8]} />
               <primitive object={selectionMaterial} />
             </mesh>
           )}

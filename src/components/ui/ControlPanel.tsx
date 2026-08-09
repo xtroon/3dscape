@@ -20,6 +20,8 @@ import {
   ArrowDown,
   Grid,
   Maximize2,
+  Sun,
+  Zap,
 } from 'lucide-react';
 import {
   SiteBuilding,
@@ -38,6 +40,10 @@ interface ControlPanelProps {
   onUpdateBuildingConfig: (id: string, newConfig: Partial<BuildingConfig>) => void;
   onUpdateBuildingDimensions: (id: string, width: number, depth: number) => void;
   onUpdateElementDimensions: (id: string, width: number, depth: number) => void;
+  onUpdateElementLightProps: (
+    id: string,
+    lightProps: { lightColor?: string; lightIntensity?: number; headType?: 'single' | 'double' | 'quad'; width?: number }
+  ) => void;
   onUpdateBuildingName: (id: string, name: string) => void;
   onUpdateElementName: (id: string, name: string) => void;
   onNudgePosition: (id: string, type: 'building' | 'element', deltaX: number, deltaZ: number) => void;
@@ -55,6 +61,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
   onUpdateBuildingConfig,
   onUpdateBuildingDimensions,
   onUpdateElementDimensions,
+  onUpdateElementLightProps,
   onUpdateBuildingName,
   onUpdateElementName,
   onNudgePosition,
@@ -75,7 +82,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
       : null;
 
   const wallSwatches = ['#e2e8f0', '#f1f5f9', '#334155', '#78350f', '#0f172a', '#d97706'];
-  const windowSwatches = ['#38bdf8', '#0284c7', '#0f172a', '#34d399', '#fef08a'];
+  const lampColorSwatches = ['#fbbf24', '#fef08a', '#e0f2fe', '#38bdf8', '#c084fc', '#34d399'];
 
   const stepSize = siteConfig.gridSnap ? siteConfig.snapSize : 2;
 
@@ -113,7 +120,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               </span>
             </div>
 
-            {/* Custom Building Footprint Dimensions (Width X & Depth Z) */}
+            {/* Custom Building Footprint Dimensions */}
             <div className="rounded-xl bg-slate-900/80 p-3 border border-slate-800 space-y-2.5">
               <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
                 <span className="flex items-center gap-1.5">
@@ -124,7 +131,6 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 </span>
               </div>
 
-              {/* Width (X) Stepper & Slider */}
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-[11px] text-slate-300">
                   <span>Width (X Axis)</span>
@@ -147,7 +153,6 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 />
               </div>
 
-              {/* Depth (Z) Stepper & Slider */}
               <div className="space-y-1">
                 <div className="flex items-center justify-between text-[11px] text-slate-300">
                   <span>Depth (Z Axis)</span>
@@ -276,52 +281,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               </div>
             </div>
 
-            {/* Feature Toggles */}
-            <div className="space-y-2 border-t border-slate-700/50 pt-3">
-              <button
-                onClick={() =>
-                  onUpdateBuildingConfig(selectedBuilding.id, {
-                    showWindows: !selectedBuilding.config.showWindows,
-                  })
-                }
-                className="flex w-full items-center justify-between rounded-xl bg-slate-900/50 p-2.5 text-xs font-medium text-slate-200 hover:bg-slate-800 border border-slate-800"
-              >
-                <span className="flex items-center gap-2">
-                  {selectedBuilding.config.showWindows ? (
-                    <CheckSquare className="h-4 w-4 text-emerald-400" />
-                  ) : (
-                    <Square className="h-4 w-4 text-slate-500" />
-                  )}
-                  Windows Facade
-                </span>
-                <span className={selectedBuilding.config.showWindows ? 'text-emerald-400 font-semibold' : 'text-slate-500'}>
-                  {selectedBuilding.config.showWindows ? 'On' : 'Off'}
-                </span>
-              </button>
-
-              <button
-                onClick={() =>
-                  onUpdateBuildingConfig(selectedBuilding.id, {
-                    showBalconies: !selectedBuilding.config.showBalconies,
-                  })
-                }
-                className="flex w-full items-center justify-between rounded-xl bg-slate-900/50 p-2.5 text-xs font-medium text-slate-200 hover:bg-slate-800 border border-slate-800"
-              >
-                <span className="flex items-center gap-2">
-                  {selectedBuilding.config.showBalconies ? (
-                    <CheckSquare className="h-4 w-4 text-emerald-400" />
-                  ) : (
-                    <Square className="h-4 w-4 text-slate-500" />
-                  )}
-                  Balconies & Railings
-                </span>
-                <span className={selectedBuilding.config.showBalconies ? 'text-emerald-400 font-semibold' : 'text-slate-500'}>
-                  {selectedBuilding.config.showBalconies ? 'On' : 'Off'}
-                </span>
-              </button>
-            </div>
-
-            {/* Wall & Glass Colors */}
+            {/* Colors */}
             <div className="space-y-3 border-t border-slate-700/50 pt-3">
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between text-[11px] text-slate-300">
@@ -371,7 +331,7 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
           </div>
         )}
 
-        {/* Selected Element Controls */}
+        {/* Selected Site Element Controls */}
         {selectedElement && (
           <div className="space-y-4">
             <div className="flex items-center justify-between border-b border-slate-700/50 pb-3">
@@ -388,6 +348,127 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 {selectedElement.type}
               </span>
             </div>
+
+            {/* Specialized Controls for Street Lamp Customization */}
+            {selectedElement.type === 'street_light' && (
+              <div className="rounded-xl bg-slate-900/80 p-3 border border-slate-800 space-y-3">
+                <div className="flex items-center justify-between text-xs font-semibold text-slate-300">
+                  <span className="flex items-center gap-1.5">
+                    <Sun className="h-3.5 w-3.5 text-amber-400" /> Street Lamp Settings
+                  </span>
+                  <span className="text-amber-400 font-bold text-[11px]">
+                    {selectedElement.width || 5.5}m Height
+                  </span>
+                </div>
+
+                {/* Pole Height Slider */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[11px] text-slate-300">
+                    <span>Pole Height</span>
+                    <span className="font-semibold text-white">{selectedElement.width || 5.5} m</span>
+                  </div>
+                  <input
+                    type="range"
+                    min={4.0}
+                    max={12.0}
+                    step={0.5}
+                    value={selectedElement.width || 5.5}
+                    onChange={(e) =>
+                      onUpdateElementLightProps(selectedElement.id, {
+                        width: parseFloat(e.target.value),
+                      })
+                    }
+                    className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                  />
+                </div>
+
+                {/* Fixture Head Configuration */}
+                <div className="space-y-1">
+                  <span className="text-[11px] text-slate-300 block font-medium">Fixture Heads</span>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {[
+                      { id: 'single', label: 'Single' },
+                      { id: 'double', label: 'Double' },
+                      { id: 'quad', label: 'Quad Mast' },
+                    ].map((head) => (
+                      <button
+                        key={`head-${head.id}`}
+                        onClick={() =>
+                          onUpdateElementLightProps(selectedElement.id, {
+                            headType: head.id as 'single' | 'double' | 'quad',
+                          })
+                        }
+                        className={`py-1.5 text-[11px] font-semibold rounded-lg border transition-all ${
+                          (selectedElement.headType || 'single') === head.id
+                            ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
+                            : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-white'
+                        }`}
+                      >
+                        {head.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Light Bulb Color */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between text-[11px] text-slate-300">
+                    <span>Light Color Tint</span>
+                    <input
+                      type="color"
+                      value={selectedElement.lightColor || '#fbbf24'}
+                      onChange={(e) =>
+                        onUpdateElementLightProps(selectedElement.id, {
+                          lightColor: e.target.value,
+                        })
+                      }
+                      className="h-5 w-7 cursor-pointer rounded bg-transparent border-0"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {lampColorSwatches.map((hex) => (
+                      <button
+                        key={`lamp-color-${hex}`}
+                        onClick={() =>
+                          onUpdateElementLightProps(selectedElement.id, { lightColor: hex })
+                        }
+                        className={`h-5 flex-1 rounded-md border transition-all ${
+                          (selectedElement.lightColor || '#fbbf24') === hex
+                            ? 'border-amber-400 scale-110'
+                            : 'border-slate-700'
+                        }`}
+                        style={{ backgroundColor: hex }}
+                      />
+                    ))}
+                  </div>
+                </div>
+
+                {/* Light Intensity Slider */}
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-[11px] text-slate-300">
+                    <span className="flex items-center gap-1">
+                      <Zap className="h-3 w-3 text-amber-400" /> Illumination Brightness
+                    </span>
+                    <span className="font-semibold text-white">
+                      {selectedElement.lightIntensity !== undefined ? selectedElement.lightIntensity : 18}
+                    </span>
+                  </div>
+                  <input
+                    type="range"
+                    min={5}
+                    max={40}
+                    step={2}
+                    value={selectedElement.lightIntensity !== undefined ? selectedElement.lightIntensity : 18}
+                    onChange={(e) =>
+                      onUpdateElementLightProps(selectedElement.id, {
+                        lightIntensity: parseInt(e.target.value),
+                      })
+                    }
+                    className="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-amber-500"
+                  />
+                </div>
+              </div>
+            )}
 
             {/* Custom Measurements for Parking, Pool, Park, Road, Clubhouse */}
             {['parking', 'pool', 'park', 'road', 'clubhouse'].includes(selectedElement.type) && (
@@ -548,13 +629,6 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 {siteConfig.gridSnap ? `ON (${siteConfig.snapSize}m)` : 'OFF'}
               </span>
             </button>
-
-            <div className="rounded-xl bg-slate-900/50 p-3 border border-slate-800 text-xs space-y-1.5 text-slate-300">
-              <span className="font-semibold text-emerald-400 block">Custom Measurements:</span>
-              <p className="text-[11px] text-slate-400 leading-relaxed">
-                Select any building or parking lot to customize its exact width and depth measurements using sliders and steppers.
-              </p>
-            </div>
           </div>
         )}
 

@@ -112,6 +112,10 @@ const initialElements: SiteElement[] = [
     name: 'Street Lamp 1',
     position: [-10, 0, 8],
     rotationY: 0,
+    width: 5.5,
+    lightColor: '#fbbf24',
+    lightIntensity: 18,
+    headType: 'single',
   },
   {
     id: 'el-lamp-2',
@@ -119,6 +123,10 @@ const initialElements: SiteElement[] = [
     name: 'Street Lamp 2',
     position: [10, 0, 8],
     rotationY: 0,
+    width: 6.5,
+    lightColor: '#38bdf8',
+    lightIntensity: 24,
+    headType: 'double',
   },
 ];
 
@@ -189,6 +197,7 @@ export const App: React.FC = () => {
         park: { w: 20, d: 20 },
         road: { w: 30, d: 8 },
         clubhouse: { w: 16, d: 12 },
+        street_light: { w: 5.5, d: 1 },
       };
 
       const dims = defaultDims[placementTool] || { w: 14, d: 10 };
@@ -202,6 +211,9 @@ export const App: React.FC = () => {
         rotationY: 0,
         width: dims.w,
         depth: dims.d,
+        lightColor: placementTool === 'street_light' ? '#fbbf24' : undefined,
+        lightIntensity: placementTool === 'street_light' ? 18 : undefined,
+        headType: placementTool === 'street_light' ? 'single' : undefined,
       };
 
       setElements((prev) => [...prev, newEl]);
@@ -228,6 +240,15 @@ export const App: React.FC = () => {
   const handleUpdateElementDimensions = (id: string, width: number, depth: number) => {
     setElements((prev) =>
       prev.map((e) => (e.id === id ? { ...e, width, depth } : e))
+    );
+  };
+
+  const handleUpdateElementLightProps = (
+    id: string,
+    lightProps: { lightColor?: string; lightIntensity?: number; headType?: 'single' | 'double' | 'quad'; width?: number }
+  ) => {
+    setElements((prev) =>
+      prev.map((e) => (e.id === id ? { ...e, ...lightProps } : e))
     );
   };
 
@@ -396,6 +417,7 @@ export const App: React.FC = () => {
         onUpdateBuildingConfig={handleUpdateBuildingConfig}
         onUpdateBuildingDimensions={handleUpdateBuildingDimensions}
         onUpdateElementDimensions={handleUpdateElementDimensions}
+        onUpdateElementLightProps={handleUpdateElementLightProps}
         onUpdateBuildingName={handleUpdateBuildingName}
         onUpdateElementName={handleUpdateElementName}
         onNudgePosition={handleNudgePosition}
