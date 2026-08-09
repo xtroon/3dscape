@@ -1,9 +1,13 @@
-export type CameraPreset = 'street' | 'front' | 'side' | 'elevated';
+export type CameraPreset = 'top_site' | 'street' | 'front' | 'side' | 'elevated';
 
 export type TimeOfDay = 'day' | 'sunset' | 'night';
 
+export type SiteElementType = 'road' | 'park' | 'parking' | 'tree' | 'pool' | 'clubhouse' | 'street_light';
+
 export interface BuildingConfig {
   floors: number;
+  width: number; // Building width X in meters (default 16, min 10, max 40)
+  depth: number; // Building depth Z in meters (default 10, min 8, max 30)
   showWindows: boolean;
   showBalconies: boolean;
   showParking: boolean;
@@ -16,6 +20,42 @@ export interface BuildingConfig {
   timeOfDay: TimeOfDay;
   propertyName: string;
   propertySubtitle: string;
+}
+
+export interface SiteBuilding {
+  id: string;
+  name: string; // e.g., "Building A"
+  position: [number, number, number];
+  rotationY: number; // in radians
+  config: BuildingConfig;
+}
+
+export interface SiteElement {
+  id: string;
+  type: SiteElementType;
+  name: string;
+  position: [number, number, number];
+  rotationY: number;
+  width?: number; // Custom measurement width in meters
+  depth?: number; // Custom measurement depth/length in meters
+}
+
+export interface SelectedItemRef {
+  id: string;
+  type: 'building' | 'element';
+}
+
+export type PlacementTool = SiteElementType | 'building' | null;
+
+export interface SiteConfig {
+  propertyName: string;
+  propertySubtitle: string;
+  timeOfDay: TimeOfDay;
+  showBoundaryWall: boolean;
+  showGridLines: boolean;
+  gridSnap: boolean;
+  snapSize: number; // e.g., 2 meters
+  plotSize: [number, number]; // [width, depth]
 }
 
 export interface CameraPositionPreset {

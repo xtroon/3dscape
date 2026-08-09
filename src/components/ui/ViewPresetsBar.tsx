@@ -1,5 +1,5 @@
 import React from 'react';
-import { Eye, Building, Compass, Layers, RotateCcw } from 'lucide-react';
+import { LayoutGrid, Eye, Building, Compass, Layers, RotateCcw } from 'lucide-react';
 import { CameraPreset } from '../../types/building';
 
 interface ViewPresetsBarProps {
@@ -15,34 +15,40 @@ export const ViewPresetsBar: React.FC<ViewPresetsBarProps> = ({
 }) => {
   const presets: { id: CameraPreset; label: string; icon: React.ReactNode; tooltip: string }[] = [
     {
+      id: 'top_site',
+      label: 'Top Site View',
+      icon: <LayoutGrid className="h-4 w-4 text-emerald-400" />,
+      tooltip: 'Overhead master planning layout view',
+    },
+    {
       id: 'street',
       label: 'Street View',
       icon: <Eye className="h-4 w-4" />,
-      tooltip: 'Human eye-level standing on street (Default)',
+      tooltip: 'Human eye-level street view',
     },
     {
       id: 'front',
       label: 'Front View',
       icon: <Building className="h-4 w-4" />,
-      tooltip: 'Full front facade elevation',
+      tooltip: 'Front site overview',
     },
     {
       id: 'side',
       label: 'Side View',
       icon: <Compass className="h-4 w-4" />,
-      tooltip: '3D perspective side profile',
+      tooltip: 'Perspective side profile',
     },
     {
       id: 'elevated',
       label: 'Elevated View',
       icon: <Layers className="h-4 w-4" />,
-      tooltip: 'Aerial bird’s eye isometric view',
+      tooltip: '3D aerial isometric perspective',
     },
   ];
 
   return (
     <div className="absolute bottom-6 left-1/2 z-20 -translate-x-1/2 pointer-events-auto">
-      <div className="glass-panel flex items-center gap-1.5 rounded-2xl p-1.5 shadow-2xl">
+      <div className="glass-panel flex items-center gap-1.5 rounded-2xl p-1.5 shadow-2xl border border-slate-700/60">
         {presets.map((preset) => {
           const isActive = currentPreset === preset.id;
           return (
@@ -66,7 +72,7 @@ export const ViewPresetsBar: React.FC<ViewPresetsBarProps> = ({
 
         <button
           onClick={onResetView}
-          title="Reset camera and perspective"
+          title="Reset camera perspective"
           className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-400 hover:bg-slate-800 hover:text-white transition-all active:scale-95"
         >
           <RotateCcw className="h-3.5 w-3.5" />
