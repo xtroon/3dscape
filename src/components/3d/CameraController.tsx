@@ -209,9 +209,10 @@ export const CameraController: React.FC<CameraControllerProps> = ({
     } else {
       switch (preset) {
         case 'master_map':
-          pos = [0, 220, 180];
+          pos = [0, 140, 100];
           look = [0, 0, 0];
           break;
+
 
 
         case 'street':

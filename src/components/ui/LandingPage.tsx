@@ -76,13 +76,19 @@ export const LandingPage: React.FC<LandingPageProps> = ({
             </div>
           </div>
 
-          <div className="flex items-center gap-4">
-            <a
-              href="#projects"
-              className="text-xs font-bold text-slate-300 hover:text-white transition-colors hidden sm:block"
-            >
-              My Projects ({projects.length})
-            </a>
+          <div className="flex items-center gap-6">
+            <nav className="hidden md:flex items-center gap-4 text-xs font-bold text-slate-300">
+              <a href="#home" className="hover:text-emerald-400 transition-colors">
+                Home
+              </a>
+              <a href="#features" className="hover:text-emerald-400 transition-colors">
+                Features
+              </a>
+              <a href="#projects" className="hover:text-emerald-400 transition-colors">
+                My Projects ({projects.length})
+              </a>
+            </nav>
+
             <button
               onClick={onCreateNewProject}
               className="flex items-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white text-xs font-extrabold px-4 py-2.5 shadow-xl shadow-emerald-600/30 transition-all border border-emerald-400/30"
@@ -95,7 +101,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </header>
 
       {/* Hero Section */}
-      <section className="relative pt-20 pb-16 px-6 overflow-hidden">
+      <section id="home" className="relative pt-20 pb-16 px-6 overflow-hidden">
+
         {/* Ambient Glow Orbs */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-emerald-500/10 blur-[140px] rounded-full pointer-events-none" />
         <div className="absolute top-1/3 right-10 w-[400px] h-[300px] bg-blue-500/10 blur-[130px] rounded-full pointer-events-none" />
@@ -276,7 +283,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       </section>
 
       {/* Features Showcase Section */}
-      <section className="py-20 px-6 max-w-7xl mx-auto">
+      <section id="features" className="py-20 px-6 max-w-7xl mx-auto">
+
         <div className="text-center max-w-2xl mx-auto mb-16 space-y-3">
           <h2 className="text-3xl font-black text-white tracking-tight">
             Engineered for Modern Site Architects

@@ -17,6 +17,15 @@ import { SitePlannerToolbar } from './components/ui/SitePlannerToolbar';
 import { ControlPanel } from './components/ui/ControlPanel';
 import { SiteObjectList } from './components/ui/SiteObjectList';
 import { ViewPresetsBar } from './components/ui/ViewPresetsBar';
+import { LandingPage } from './components/ui/LandingPage';
+import {
+  projectManager,
+  ProjectData,
+  createDefaultInitialBuildings,
+  createDefaultInitialElements,
+  createDefaultSiteConfig,
+} from './utils/projectManager';
+
 
 const defaultBuildingConfig: BuildingConfig = {
   floors: 6,
@@ -144,9 +153,12 @@ const defaultSiteConfig: SiteConfig = {
 
 
 export const App: React.FC = () => {
-  const [siteConfig, setSiteConfig] = useState<SiteConfig>(defaultSiteConfig);
-  const [buildings, setBuildings] = useState<SiteBuilding[]>(initialBuildings);
-  const [elements, setElements] = useState<SiteElement[]>(initialElements);
+  const [viewMode, setViewMode] = useState<'landing' | 'planner'>('landing');
+  const [activeProject, setActiveProject] = useState<ProjectData | null>(null);
+
+  const [siteConfig, setSiteConfig] = useState<SiteConfig>(createDefaultSiteConfig());
+  const [buildings, setBuildings] = useState<SiteBuilding[]>(createDefaultInitialBuildings());
+  const [elements, setElements] = useState<SiteElement[]>(createDefaultInitialElements());
   const [selectedItem, setSelectedItem] = useState<SelectedItemRef | null>({
     id: 'b-1',
     type: 'building',
@@ -157,6 +169,84 @@ export const App: React.FC = () => {
   const [doubleClickTarget, setDoubleClickTarget] = useState<[number, number, number] | null>(null);
 
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const isInitialMount = useRef(true);
+
+  // Sync URL search parameters on mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const projectIdFromUrl = params.get('project');
+      if (projectIdFromUrl) {
+        const proj = projectManager.getProject(projectIdFromUrl);
+        if (proj) {
+          setActiveProject(proj);
+          setBuildings(proj.buildings || createDefaultInitialBuildings());
+          setElements(proj.elements || createDefaultInitialElements());
+          setSiteConfig(proj.siteConfig || createDefaultSiteConfig());
+          setSelectedItem(proj.buildings?.[0] ? { id: proj.buildings[0].id, type: 'building' } : null);
+          setViewMode('planner');
+        }
+      }
+    }
+  }, []);
+
+  // Load project by ID
+  const handleOpenProject = (id: string) => {
+    let proj = projectManager.getProject(id);
+    if (!proj) {
+      proj = projectManager.createProject();
+    }
+    setActiveProject(proj);
+    setBuildings(proj.buildings || createDefaultInitialBuildings());
+    setElements(proj.elements || createDefaultInitialElements());
+    setSiteConfig(proj.siteConfig || createDefaultSiteConfig());
+    setSelectedItem(proj.buildings?.[0] ? { id: proj.buildings[0].id, type: 'building' } : null);
+    setViewMode('planner');
+
+    if (typeof window !== 'undefined') {
+      window.history.pushState(null, '', `?project=${proj.id}`);
+    }
+  };
+
+  // Create new project
+  const handleCreateNewProject = () => {
+    const newProj = projectManager.createProject();
+    setActiveProject(newProj);
+    setBuildings(newProj.buildings);
+    setElements(newProj.elements);
+    setSiteConfig(newProj.siteConfig);
+    setSelectedItem({ id: newProj.buildings[0].id, type: 'building' });
+    setViewMode('planner');
+
+    if (typeof window !== 'undefined') {
+      window.history.pushState(null, '', `?project=${newProj.id}`);
+    }
+  };
+
+  // Return to Dashboard Landing Page
+  const handleBackToLanding = () => {
+    setViewMode('landing');
+    if (typeof window !== 'undefined') {
+      window.history.pushState(null, '', window.location.pathname);
+    }
+  };
+
+  // Auto-save changes to localStorage when working in planner mode
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+    if (viewMode === 'planner' && activeProject) {
+      projectManager.saveProject({
+        ...activeProject,
+        buildings,
+        elements,
+        siteConfig,
+      });
+    }
+  }, [buildings, elements, siteConfig, viewMode, activeProject]);
+
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -389,9 +479,9 @@ export const App: React.FC = () => {
   };
 
   const handleResetView = () => {
-    setSiteConfig(defaultSiteConfig);
-    setBuildings(initialBuildings);
-    setElements(initialElements);
+    setSiteConfig(createDefaultSiteConfig());
+    setBuildings(createDefaultInitialBuildings());
+    setElements(createDefaultInitialElements());
     setSelectedItem({ id: 'b-1', type: 'building' });
     setPlacementTool(null);
     setFocusTarget(null);
@@ -417,6 +507,15 @@ export const App: React.FC = () => {
     }
   };
 
+  if (viewMode === 'landing') {
+    return (
+      <LandingPage
+        onOpenProject={handleOpenProject}
+        onCreateNewProject={handleCreateNewProject}
+      />
+    );
+  }
+
   const isStreetView = cameraPreset === 'street';
 
   return (
@@ -427,8 +526,12 @@ export const App: React.FC = () => {
           siteConfig={siteConfig}
           onChangeSiteConfig={(newPartial) => setSiteConfig((prev) => ({ ...prev, ...newPartial }))}
           onCaptureScreenshot={handleCaptureScreenshot}
+          onBackToLanding={handleBackToLanding}
+          projectName={activeProject?.name}
         />
+
       )}
+
 
       {/* Top Creation Toolbar */}
       {!isStreetView && (
