@@ -14,7 +14,7 @@ export const PlotGround: React.FC<PlotGroundProps> = ({ config }) => {
   const isSunset = timeOfDay === 'sunset';
 
   const grassMat = new THREE.MeshStandardMaterial({
-    color: isNight ? '#064e3b' : isSunset ? '#15803d' : '#16a34a',
+    color: isNight ? '#093a26' : isSunset ? '#15803d' : '#16a34a',
     roughness: 0.9,
     metalness: 0.05,
   });
@@ -48,17 +48,12 @@ export const PlotGround: React.FC<PlotGroundProps> = ({ config }) => {
 
   return (
     <group position={[0, 0, 0]}>
-      {/* Outer Infinite Horizon Grass Ground */}
-      <mesh receiveShadow position={[0, -0.08, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+      {/* Unified Seamless Grass Ground Plane */}
+      <mesh receiveShadow position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <planeGeometry args={[3000, 3000]} />
         <primitive object={grassMat} attach="material" />
       </mesh>
 
-      {/* Main Ground Grass Lawn Plane */}
-      <mesh receiveShadow position={[0, -0.05, 0]} rotation={[-Math.PI / 2, 0, 0]}>
-        <planeGeometry args={[width, depth]} />
-        <primitive object={grassMat} attach="material" />
-      </mesh>
 
       {/* Grid Lines Overlay */}
       {showGridLines && (

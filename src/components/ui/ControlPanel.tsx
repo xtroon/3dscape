@@ -618,6 +618,60 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
               </div>
             </div>
 
+            {/* Interactive Boundary & Arena Size Section */}
+            <div className="rounded-xl bg-slate-900/80 p-3 border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between text-xs font-bold text-slate-200">
+                <span className="flex items-center gap-1.5">
+                  <Maximize2 className="h-4 w-4 text-emerald-400" /> Arena Boundary Size
+                </span>
+                <span className="text-emerald-400 font-mono">
+                  {siteConfig.plotSize[0]}m × {siteConfig.plotSize[1]}m
+                </span>
+              </div>
+
+              {/* Range Slider for Arena Size */}
+              <div className="space-y-1.5">
+                <div className="flex justify-between text-[10px] text-slate-400">
+                  <span>Standard (200m)</span>
+                  <span>Large (500m)</span>
+                  <span>Mega Arena (1500m)</span>
+                </div>
+                <input
+                  type="range"
+                  min={200}
+                  max={1500}
+                  step={50}
+                  value={siteConfig.plotSize[0]}
+                  onChange={(e) => {
+                    const newSize = parseInt(e.target.value);
+                    onUpdateSiteConfig({ plotSize: [newSize, newSize] });
+                  }}
+                  className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                />
+              </div>
+
+              {/* Quick Presets Buttons */}
+              <div className="grid grid-cols-4 gap-1.5 pt-1">
+                {[200, 500, 800, 1200].map((presetVal) => {
+                  const isActive = siteConfig.plotSize[0] === presetVal;
+                  return (
+                    <button
+                      key={`plot-preset-${presetVal}`}
+                      onClick={() => onUpdateSiteConfig({ plotSize: [presetVal, presetVal] })}
+                      className={`rounded-lg py-1.5 text-[11px] font-bold transition-all ${
+                        isActive
+                          ? 'bg-emerald-600 text-white shadow-md ring-1 ring-emerald-400'
+                          : 'bg-slate-800 text-slate-300 hover:bg-slate-700 hover:text-white'
+                      }`}
+                    >
+                      {presetVal}m
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Snap to Grid Alignment Toggle */}
             <button
               onClick={() => onUpdateSiteConfig({ gridSnap: !siteConfig.gridSnap })}
               className="flex w-full items-center justify-between rounded-xl bg-slate-900/60 p-3 text-xs font-semibold text-slate-200 hover:bg-slate-800 border border-slate-800"
@@ -629,8 +683,22 @@ export const ControlPanel: React.FC<ControlPanelProps> = ({
                 {siteConfig.gridSnap ? `ON (${siteConfig.snapSize}m)` : 'OFF'}
               </span>
             </button>
+
+            {/* Perimeter Wall Toggle */}
+            <button
+              onClick={() => onUpdateSiteConfig({ showBoundaryWall: !siteConfig.showBoundaryWall })}
+              className="flex w-full items-center justify-between rounded-xl bg-slate-900/60 p-3 text-xs font-semibold text-slate-200 hover:bg-slate-800 border border-slate-800"
+            >
+              <span className="flex items-center gap-2">
+                <Layers className="h-4 w-4 text-emerald-400" /> Show Perimeter Boundary Wall
+              </span>
+              <span className={siteConfig.showBoundaryWall ? 'text-emerald-400 font-bold' : 'text-slate-500'}>
+                {siteConfig.showBoundaryWall ? 'VISIBLE' : 'HIDDEN'}
+              </span>
+            </button>
           </div>
         )}
+
 
       </div>
     </div>

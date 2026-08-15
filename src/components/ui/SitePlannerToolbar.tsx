@@ -11,8 +11,8 @@ import {
   X,
   Sparkles,
   Sun,
-  Droplets,
 } from 'lucide-react';
+
 import { PlacementTool, SiteElementType } from '../../types/building';
 
 interface SitePlannerToolbarProps {
@@ -43,12 +43,7 @@ export const SitePlannerToolbar: React.FC<SitePlannerToolbarProps> = ({
       icon: <Trees className="h-4 w-4" />,
       color: 'bg-slate-800 hover:bg-slate-700 text-slate-200',
     },
-    {
-      id: 'waterfall',
-      label: 'Waterfall',
-      icon: <Droplets className="h-4 w-4 text-cyan-400" />,
-      color: 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-cyan-500/30',
-    },
+
     {
       id: 'parking',
       label: 'Parking',

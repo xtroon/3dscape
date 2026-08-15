@@ -205,6 +205,28 @@ export const ProceduralBuilding: React.FC<BuildingProps> = ({ config }) => {
         <mesh receiveShadow position={[0, -groundFloorHeight / 2 + 0.15, buildingDepth / 2 + 0.8]} material={materials.trimMat}>
           <boxGeometry args={[entranceWidth + 2, 0.3, 1.6]} />
         </mesh>
+
+        {/* Exterior Entrance Light Bollards Outside Building */}
+        {[-entranceWidth / 2 - 1.2, entranceWidth / 2 + 1.2].map((bX, bIdx) => (
+          <group key={`bldg-light-${bIdx}`} position={[bX, -groundFloorHeight / 2 + 0.5, buildingDepth / 2 + 1.5]}>
+            <mesh castShadow position={[0, 0.4, 0]}>
+              <cylinderGeometry args={[0.08, 0.1, 0.8, 8]} />
+              <meshStandardMaterial color="#334155" roughness={0.3} />
+            </mesh>
+            <mesh position={[0, 0.85, 0]}>
+              <cylinderGeometry args={[0.14, 0.14, 0.1, 8]} />
+              <meshStandardMaterial
+                color="#fef08a"
+                emissive={timeOfDay === 'night' || timeOfDay === 'sunset' ? new THREE.Color('#fef08a') : new THREE.Color('#ffffff')}
+                emissiveIntensity={timeOfDay === 'night' ? 2.5 : 0.5}
+              />
+            </mesh>
+            {(timeOfDay === 'night' || timeOfDay === 'sunset') && (
+              <pointLight position={[0, 0.7, 0]} color="#fef08a" intensity={timeOfDay === 'night' ? 14 : 5} distance={12} />
+            )}
+          </group>
+        ))}
+
       </group>
 
       {/* Floors 1 to N */}

@@ -413,7 +413,7 @@ export const CameraController: React.FC<CameraControllerProps> = ({
       panSpeed={1.8}
       maxPolarAngle={Math.PI / 2 - 0.02}
       minDistance={1.2}
-      maxDistance={1200}
+      maxDistance={2500}
       onStart={() => {
         isLerping.current = false;
       }}

@@ -34,8 +34,8 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
     return tex;
   }, []);
 
-  const width = element.width || (element.type === 'road' ? 30 : element.type === 'parking' ? 20 : element.type === 'waterfall' ? 24 : 14);
-  const depth = element.depth || (element.type === 'road' ? 8 : element.type === 'parking' ? 14 : element.type === 'waterfall' ? 18 : 10);
+  const width = element.width || (element.type === 'road' ? 30 : element.type === 'parking' ? 20 : 14);
+  const depth = element.depth || (element.type === 'road' ? 8 : element.type === 'parking' ? 14 : 10);
 
   const selectionMaterial = useMemo(() => {
     return new THREE.MeshBasicMaterial({
@@ -100,85 +100,111 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
             );
           })}
 
-          {/* Realistic 3D Parked Vehicles */}
+          {/* Realistic Full-Sized 3D Parked Vehicles */}
           {bayPositions.slice(0, -1).map((x, i) => {
             if (i % 2 !== 0) return null;
             const posX = x + baySpacing / 2;
-            const carColors = ['#1e3a8a', '#f8fafc', '#dc2626', '#047857', '#d97706', '#475569'];
+            const carColors = ['#1e3a8a', '#f8fafc', '#dc2626', '#047857', '#d97706', '#334155'];
             const carColor = carColors[i % carColors.length];
-            const carType = i % 3; // 0 = Sedan, 1 = SUV, 2 = Sport
+            const carType = i % 3; // 0 = Sedan, 1 = SUV, 2 = Sport/Coupe
 
-            const carLength = depth * 0.55;
-            const carWidth = Math.min(2.1, baySpacing * 0.78);
-            const carHeight = carType === 1 ? 1.2 : 0.9;
+            const carLength = depth * 0.65;
+            const carWidth = Math.min(2.4, baySpacing * 0.82);
+            const carHeight = carType === 1 ? 1.85 : 1.55; // Realistic car height matching human scale (1.8m)
 
             return (
-              <group key={`car-${i}`} position={[posX, 0.52, 0]} rotation={[0, Math.PI / 2, 0]}>
-                {/* Lower Chassis & Body */}
-                <mesh castShadow position={[0, 0, 0]}>
-                  <boxGeometry args={[carLength, carHeight * 0.6, carWidth]} />
+              <group key={`car-${i}`} position={[posX, 0.9, 0]} rotation={[0, Math.PI / 2, 0]}>
+                {/* Main Body Lower Chassis */}
+                <mesh castShadow position={[0, -0.1, 0]}>
+                  <boxGeometry args={[carLength, carHeight * 0.55, carWidth]} />
+                  <meshStandardMaterial color={carColor} roughness={0.15} metalness={0.85} />
+                </mesh>
+
+                {/* Upper Glass Cabin */}
+                <mesh castShadow position={[-0.08 * carLength, carHeight * 0.45, 0]}>
+                  <boxGeometry args={[carLength * 0.52, carHeight * 0.5, carWidth * 0.88]} />
+                  <meshStandardMaterial color="#0f172a" roughness={0.08} metalness={0.92} />
+                </mesh>
+
+                {/* Windshield & Rear Glass Glare */}
+                <mesh position={[carLength * 0.16, carHeight * 0.46, 0]} rotation={[0, 0, -0.45]}>
+                  <planeGeometry args={[0.08, carWidth * 0.82]} />
+                  <meshPhysicalMaterial color="#38bdf8" roughness={0.05} transmission={0.7} transparent />
+                </mesh>
+
+                {/* Side Mirrors */}
+                <mesh castShadow position={[carLength * 0.1, carHeight * 0.35, carWidth * 0.52]}>
+                  <boxGeometry args={[0.2, 0.14, 0.22]} />
                   <meshStandardMaterial color={carColor} roughness={0.2} metalness={0.8} />
                 </mesh>
-                {/* Upper Cabin */}
-                <mesh castShadow position={[-0.1 * carLength, carHeight * 0.5, 0]}>
-                  <boxGeometry args={[carLength * 0.55, carHeight * 0.55, carWidth * 0.9]} />
-                  <meshStandardMaterial color="#0f172a" roughness={0.1} metalness={0.9} />
+                <mesh castShadow position={[carLength * 0.1, carHeight * 0.35, -carWidth * 0.52]}>
+                  <boxGeometry args={[0.2, 0.14, 0.22]} />
+                  <meshStandardMaterial color={carColor} roughness={0.2} metalness={0.8} />
                 </mesh>
-                {/* Windshield Gloss */}
-                <mesh position={[carLength * 0.15, carHeight * 0.52, 0]} rotation={[0, 0, -0.4]}>
-                  <planeGeometry args={[0.05, carWidth * 0.85]} />
-                  <meshPhysicalMaterial color="#38bdf8" roughness={0.1} transmission={0.6} transparent />
-                </mesh>
-                {/* Wheels */}
+
+                {/* Wheels & Tires (Full 0.7m Diameter Tires) */}
                 {[-carLength * 0.3, carLength * 0.3].map((wX, wIdx) => (
                   <group key={`wheels-${wIdx}`}>
-                    <mesh position={[wX, -carHeight * 0.2, carWidth * 0.48]} rotation={[Math.PI / 2, 0, 0]}>
-                      <cylinderGeometry args={[0.26, 0.26, 0.15, 16]} />
+                    {/* Right Wheel */}
+                    <mesh position={[wX, -carHeight * 0.32, carWidth * 0.46]} rotation={[Math.PI / 2, 0, 0]}>
+                      <cylinderGeometry args={[0.35, 0.35, 0.22, 16]} />
                       <meshStandardMaterial color="#0f172a" roughness={0.9} />
                     </mesh>
-                    <mesh position={[wX, -carHeight * 0.2, -carWidth * 0.48]} rotation={[Math.PI / 2, 0, 0]}>
-                      <cylinderGeometry args={[0.26, 0.26, 0.15, 16]} />
+                    <mesh position={[wX, -carHeight * 0.32, carWidth * 0.49]} rotation={[Math.PI / 2, 0, 0]}>
+                      <cylinderGeometry args={[0.22, 0.22, 0.23, 12]} />
+                      <meshStandardMaterial color="#cbd5e1" roughness={0.2} metalness={0.9} />
+                    </mesh>
+                    {/* Left Wheel */}
+                    <mesh position={[wX, -carHeight * 0.32, -carWidth * 0.46]} rotation={[Math.PI / 2, 0, 0]}>
+                      <cylinderGeometry args={[0.35, 0.35, 0.22, 16]} />
                       <meshStandardMaterial color="#0f172a" roughness={0.9} />
+                    </mesh>
+                    <mesh position={[wX, -carHeight * 0.32, -carWidth * 0.49]} rotation={[Math.PI / 2, 0, 0]}>
+                      <cylinderGeometry args={[0.22, 0.22, 0.23, 12]} />
+                      <meshStandardMaterial color="#cbd5e1" roughness={0.2} metalness={0.9} />
                     </mesh>
                   </group>
                 ))}
-                {/* Headlights */}
-                <mesh position={[carLength * 0.5 + 0.02, carHeight * 0.1, carWidth * 0.32]}>
-                  <boxGeometry args={[0.04, 0.12, 0.24]} />
+
+                {/* Front Headlights */}
+                <mesh position={[carLength * 0.5 + 0.02, 0.05, carWidth * 0.34]}>
+                  <boxGeometry args={[0.06, 0.2, 0.32]} />
                   <meshStandardMaterial
                     color="#fef08a"
                     emissive={isNight || isSunset ? new THREE.Color('#fef08a') : new THREE.Color('#ffffff')}
-                    emissiveIntensity={isNight ? 1.5 : 0.3}
+                    emissiveIntensity={isNight ? 2.5 : 0.4}
                   />
                 </mesh>
-                <mesh position={[carLength * 0.5 + 0.02, carHeight * 0.1, -carWidth * 0.32]}>
-                  <boxGeometry args={[0.04, 0.12, 0.24]} />
+                <mesh position={[carLength * 0.5 + 0.02, 0.05, -carWidth * 0.34]}>
+                  <boxGeometry args={[0.06, 0.2, 0.32]} />
                   <meshStandardMaterial
                     color="#fef08a"
                     emissive={isNight || isSunset ? new THREE.Color('#fef08a') : new THREE.Color('#ffffff')}
-                    emissiveIntensity={isNight ? 1.5 : 0.3}
+                    emissiveIntensity={isNight ? 2.5 : 0.4}
                   />
                 </mesh>
-                {/* Taillights */}
-                <mesh position={[-carLength * 0.5 - 0.02, carHeight * 0.1, carWidth * 0.32]}>
-                  <boxGeometry args={[0.04, 0.12, 0.24]} />
+
+                {/* Rear Taillights */}
+                <mesh position={[-carLength * 0.5 - 0.02, 0.05, carWidth * 0.34]}>
+                  <boxGeometry args={[0.06, 0.18, 0.32]} />
                   <meshStandardMaterial
                     color="#ef4444"
                     emissive={isNight || isSunset ? new THREE.Color('#ef4444') : new THREE.Color('#440000')}
-                    emissiveIntensity={isNight ? 1.8 : 0.2}
+                    emissiveIntensity={isNight ? 2.8 : 0.3}
                   />
                 </mesh>
-                <mesh position={[-carLength * 0.5 - 0.02, carHeight * 0.1, -carWidth * 0.32]}>
-                  <boxGeometry args={[0.04, 0.12, 0.24]} />
+                <mesh position={[-carLength * 0.5 - 0.02, 0.05, -carWidth * 0.34]}>
+                  <boxGeometry args={[0.06, 0.18, 0.32]} />
                   <meshStandardMaterial
                     color="#ef4444"
                     emissive={isNight || isSunset ? new THREE.Color('#ef4444') : new THREE.Color('#440000')}
-                    emissiveIntensity={isNight ? 1.8 : 0.2}
+                    emissiveIntensity={isNight ? 2.8 : 0.3}
                   />
                 </mesh>
               </group>
             );
           })}
+
 
           {/* Integrated Night Light Bollards for Parking Area */}
           {[-width / 2 + 1, width / 2 - 1].map((pX, pIdx) => (
@@ -216,119 +242,7 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
       );
     }
 
-    case 'waterfall': {
-      const cliffHeight = Math.max(6.0, depth * 0.45);
-      const basinW = width * 0.85;
-      const basinD = depth * 0.55;
 
-      return (
-        <group>
-          {/* Natural Rock Cliff Formation Base */}
-          <group position={[0, cliffHeight / 2, -depth * 0.2]}>
-            {/* Main Cliff Wall */}
-            <mesh castShadow receiveShadow>
-              <boxGeometry args={[width, cliffHeight, depth * 0.5]} />
-              <meshStandardMaterial color="#334155" roughness={0.95} metalness={0.1} />
-            </mesh>
-            {/* Terraced Slate Rock Boulders */}
-            {[-width * 0.35, -width * 0.1, width * 0.15, width * 0.38].map((rX, rIdx) => (
-              <mesh key={`rock-${rIdx}`} castShadow position={[rX, (rIdx % 2) * 0.8 - cliffHeight * 0.2, 0.6 + (rIdx % 2) * 0.4]}>
-                <dodecahedronGeometry args={[1.6 + (rIdx % 3) * 0.4, 1]} />
-                <meshStandardMaterial color="#475569" roughness={0.9} />
-              </mesh>
-            ))}
-          </group>
-
-          {/* Lower Splash Water Basin Pond */}
-          <group position={[0, 0.15, depth * 0.2]}>
-            {/* Pond Stone Rim */}
-            <mesh receiveShadow castShadow position={[0, 0.1, 0]}>
-              <boxGeometry args={[basinW + 1.2, 0.3, basinD + 1.2]} />
-              <meshStandardMaterial color="#475569" roughness={0.8} />
-            </mesh>
-            {/* Pond Water Surface */}
-            <mesh receiveShadow position={[0, 0.22, 0]}>
-              <boxGeometry args={[basinW, 0.1, basinD]} />
-              <meshPhysicalMaterial
-                color="#0284c7"
-                transmission={0.85}
-                opacity={0.88}
-                transparent
-                roughness={0.08}
-                metalness={0.1}
-                ior={1.333}
-              />
-            </mesh>
-            {/* Splash Ripple Ring */}
-            <mesh position={[0, 0.28, -basinD * 0.3]} rotation={[-Math.PI / 2, 0, 0]}>
-              <ringGeometry args={[0.5, basinW * 0.35, 32]} />
-              <meshBasicMaterial color="#bae6fd" transparent opacity={0.6} />
-            </mesh>
-          </group>
-
-          {/* Cascading Flowing Water Stream Sheets */}
-          <group position={[0, cliffHeight * 0.45, -depth * 0.05]}>
-            <mesh position={[0, 0, 0]} rotation={[0.2, 0, 0]}>
-              <boxGeometry args={[width * 0.65, cliffHeight * 0.9, 0.25]} />
-              <meshPhysicalMaterial
-                color="#7dd3fc"
-                emissive="#38bdf8"
-                emissiveIntensity={isNight ? 0.3 : 0.1}
-                transmission={0.8}
-                transparent
-                opacity={0.75}
-                roughness={0.1}
-              />
-            </mesh>
-            {/* Foam White Spray Layer */}
-            <mesh position={[0, -cliffHeight * 0.35, depth * 0.15]}>
-              <boxGeometry args={[width * 0.72, 0.4, 0.8]} />
-              <meshStandardMaterial color="#ffffff" roughness={0.3} />
-            </mesh>
-          </group>
-
-          {/* Surrounding Natural Shrubs & Plants */}
-          {[-width * 0.42, width * 0.42].map((pX, pIdx) => (
-            <group key={`plant-${pIdx}`} position={[pX, 0.4, depth * 0.25]}>
-              <mesh castShadow>
-                <sphereGeometry args={[1.2, 8, 8]} />
-                <meshStandardMaterial color={isNight ? '#064e3b' : '#15803d'} roughness={0.7} />
-              </mesh>
-            </group>
-          ))}
-
-          {/* Integrated Night Illumination for Waterfall */}
-          {(isNight || isSunset) && (
-            <>
-              {/* Submerged Blue Basin Light */}
-              <pointLight
-                position={[0, 0.6, depth * 0.2]}
-                color="#38bdf8"
-                intensity={isNight ? 24 : 10}
-                distance={width * 1.2}
-              />
-              {/* Rock Uplights */}
-              <spotLight
-                position={[0, 0.4, depth * 0.1]}
-                target-position={[0, cliffHeight * 0.6, -depth * 0.2]}
-                color="#bae6fd"
-                intensity={isNight ? 35 : 12}
-                distance={cliffHeight * 2.5}
-                angle={Math.PI / 3}
-                penumbra={0.5}
-              />
-            </>
-          )}
-
-          {isSelected && (
-            <mesh position={[0, cliffHeight / 2, 0]}>
-              <boxGeometry args={[width + 0.6, cliffHeight + 0.4, depth + 0.6]} />
-              <primitive object={selectionMaterial} />
-            </mesh>
-          )}
-        </group>
-      );
-    }
 
     case 'pool': {
       const waterW = Math.max(4, width - 3.2);
@@ -499,7 +413,7 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
           <mesh receiveShadow position={[0, 0.05, 0]}>
             <boxGeometry args={[width, 0.1, depth]} />
             <meshStandardMaterial
-              color={isNight ? '#064e3b' : isSunset ? '#15803d' : '#16a34a'}
+              color={isNight ? '#093a26' : isSunset ? '#15803d' : '#16a34a'}
               roughness={0.9}
             />
           </mesh>
@@ -524,9 +438,16 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
             <meshPhysicalMaterial color="#38bdf8" roughness={0.1} transmission={0.7} transparent />
           </mesh>
 
-          {/* Garden Bollard Lights at Night */}
-          {[-width * 0.35, width * 0.35].map((bX, bIdx) => (
-            <group key={`bollard-${bIdx}`} position={[bX, 0, depth * 0.35]}>
+          {/* Synchronized Garden Bollard Lamps (4 Corners + Pathways) */}
+          {[
+            [-width * 0.35, -depth * 0.35],
+            [width * 0.35, -depth * 0.35],
+            [-width * 0.35, depth * 0.35],
+            [width * 0.35, depth * 0.35],
+            [0, -depth * 0.22],
+            [0, depth * 0.22],
+          ].map(([bX, bZ], bIdx) => (
+            <group key={`bollard-${bIdx}`} position={[bX, 0, bZ]}>
               <mesh castShadow position={[0, 0.5, 0]}>
                 <cylinderGeometry args={[0.08, 0.1, 1.0, 8]} />
                 <meshStandardMaterial color="#334155" roughness={0.3} />
@@ -536,14 +457,15 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
                 <meshStandardMaterial
                   color="#fef08a"
                   emissive={isNight || isSunset ? new THREE.Color('#fef08a') : new THREE.Color('#ffffff')}
-                  emissiveIntensity={isNight ? 2.0 : 0.4}
+                  emissiveIntensity={isNight ? 2.5 : 0.5}
                 />
               </mesh>
               {(isNight || isSunset) && (
-                <pointLight position={[0, 0.9, 0]} color="#fef08a" intensity={isNight ? 12 : 4} distance={10} />
+                <pointLight position={[0, 0.9, 0]} color="#fef08a" intensity={isNight ? 14 : 5} distance={12} />
               )}
             </group>
           ))}
+
 
           {isSelected && (
             <mesh position={[0, 0.1, 0]}>

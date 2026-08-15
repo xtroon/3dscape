@@ -2,7 +2,7 @@ export type CameraPreset = 'master_map' | 'street';
 
 export type TimeOfDay = 'day' | 'sunset' | 'night';
 
-export type SiteElementType = 'road' | 'park' | 'parking' | 'tree' | 'pool' | 'clubhouse' | 'street_light' | 'waterfall';
+export type SiteElementType = 'road' | 'park' | 'parking' | 'tree' | 'pool' | 'clubhouse' | 'street_light';
 
 export interface BuildingConfig {
   floors: number;

@@ -107,16 +107,8 @@ const initialElements: SiteElement[] = [
     depth: 12,
   },
   {
-    id: 'el-waterfall-1',
-    type: 'waterfall',
-    name: 'Cascading Rock Waterfall',
-    position: [40, 0, -40],
-    rotationY: 0,
-    width: 24,
-    depth: 18,
-  },
-  {
     id: 'el-lamp-1',
+
     type: 'street_light',
     name: 'Street Lamp 1',
     position: [-10, 0, 8],
@@ -144,11 +136,12 @@ const defaultSiteConfig: SiteConfig = {
   propertySubtitle: 'Master Residential Community',
   timeOfDay: 'day',
   showBoundaryWall: true,
-  showGridLines: true,
+  showGridLines: false,
   gridSnap: true,
   snapSize: 2,
-  plotSize: [500, 500],
+  plotSize: [200, 200],
 };
+
 
 export const App: React.FC = () => {
   const [siteConfig, setSiteConfig] = useState<SiteConfig>(defaultSiteConfig);
@@ -218,7 +211,6 @@ export const App: React.FC = () => {
         pool: 'Swimming Pool',
         clubhouse: 'Clubhouse',
         street_light: 'Street Lamp',
-        waterfall: 'Cascading Waterfall',
       };
 
       const defaultDims: Record<string, { w: number; d: number }> = {
@@ -228,8 +220,8 @@ export const App: React.FC = () => {
         road: { w: 30, d: 8 },
         clubhouse: { w: 16, d: 12 },
         street_light: { w: 5.5, d: 1 },
-        waterfall: { w: 24, d: 18 },
       };
+
 
 
       const dims = defaultDims[placementTool] || { w: 14, d: 10 };
