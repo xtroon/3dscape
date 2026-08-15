@@ -51,21 +51,6 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
   onExitStreetView,
 }) => {
   const { timeOfDay, gridSnap, snapSize } = siteConfig;
-  const [virtualKeys, setVirtualKeys] = useState({ w: false, a: false, s: false, d: false });
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  const handleVirtualKey = (key: 'w' | 'a' | 's' | 'd', isPressed: boolean) => {
-    setVirtualKeys((prev) => ({ ...prev, [key]: isPressed }));
-  };
 
   const [cursorPos, setCursorPos] = useState<[number, number, number]>([0, 0, 0]);
   const [isPointerOverGround, setIsPointerOverGround] = useState(false);
@@ -147,66 +132,10 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
                 Street View
               </div>
               <p className="text-slate-300 text-[11px] leading-normal mb-1">
-                Click to lock mouse & look around (360°). Use <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-emerald-300 font-mono font-bold text-[9px]">W</kbd> <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-emerald-300 font-mono font-bold text-[9px]">A</kbd> <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-emerald-300 font-mono font-bold text-[9px]">S</kbd> <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-emerald-300 font-mono font-bold text-[9px]">D</kbd> to walk.
+                Click to lock mouse & look around (360°). Use <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-emerald-300 font-mono font-bold text-[9px]">W</kbd> <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-emerald-300 font-mono font-bold text-[9px]">A</kbd> <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-emerald-300 font-mono font-bold text-[9px]">S</kbd> <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-emerald-300 font-mono font-bold text-[9px]">D</kbd> or <kbd className="px-1.5 py-0.5 bg-slate-800 border border-slate-700 rounded text-emerald-300 font-mono font-bold text-[9px]">Arrow Keys</kbd> to walk.
               </p>
             </div>
           </div>
-
-          {/* Bottom-Center Virtual D-Pad for Mobile Walking */}
-          {isMobile && (
-            <div className="absolute bottom-8 left-1/2 z-40 -translate-x-1/2 pointer-events-auto flex flex-col items-center gap-1.5">
-              <div className="flex flex-col items-center gap-2 bg-slate-950/80 backdrop-blur-md border border-slate-700/50 rounded-3xl p-3 shadow-2xl">
-                {/* Up Button */}
-                <button
-                  onPointerDown={() => handleVirtualKey('w', true)}
-                  onPointerUp={() => handleVirtualKey('w', false)}
-                  onPointerLeave={() => handleVirtualKey('w', false)}
-                  onTouchStart={(e) => { e.preventDefault(); handleVirtualKey('w', true); }}
-                  onTouchEnd={(e) => { e.preventDefault(); handleVirtualKey('w', false); }}
-                  className="w-11 h-11 flex items-center justify-center bg-slate-800 active:bg-emerald-600 rounded-2xl border border-slate-700/60 shadow-lg text-white font-bold select-none text-base transition-all active:scale-90"
-                  title="Walk Forward (W)"
-                >
-                  ▲
-                </button>
-                {/* Left / Down / Right Row */}
-                <div className="flex items-center gap-2">
-                  <button
-                    onPointerDown={() => handleVirtualKey('a', true)}
-                    onPointerUp={() => handleVirtualKey('a', false)}
-                    onPointerLeave={() => handleVirtualKey('a', false)}
-                    onTouchStart={(e) => { e.preventDefault(); handleVirtualKey('a', true); }}
-                    onTouchEnd={(e) => { e.preventDefault(); handleVirtualKey('a', false); }}
-                    className="w-11 h-11 flex items-center justify-center bg-slate-800 active:bg-emerald-600 rounded-2xl border border-slate-700/60 shadow-lg text-white font-bold select-none text-base transition-all active:scale-90"
-                    title="Strafe Left (A)"
-                  >
-                    ◀
-                  </button>
-                  <button
-                    onPointerDown={() => handleVirtualKey('s', true)}
-                    onPointerUp={() => handleVirtualKey('s', false)}
-                    onPointerLeave={() => handleVirtualKey('s', false)}
-                    onTouchStart={(e) => { e.preventDefault(); handleVirtualKey('s', true); }}
-                    onTouchEnd={(e) => { e.preventDefault(); handleVirtualKey('s', false); }}
-                    className="w-11 h-11 flex items-center justify-center bg-slate-800 active:bg-emerald-600 rounded-2xl border border-slate-700/60 shadow-lg text-white font-bold select-none text-base transition-all active:scale-90"
-                    title="Walk Backward (S)"
-                  >
-                    ▼
-                  </button>
-                  <button
-                    onPointerDown={() => handleVirtualKey('d', true)}
-                    onPointerUp={() => handleVirtualKey('d', false)}
-                    onPointerLeave={() => handleVirtualKey('d', false)}
-                    onTouchStart={(e) => { e.preventDefault(); handleVirtualKey('d', true); }}
-                    onTouchEnd={(e) => { e.preventDefault(); handleVirtualKey('d', false); }}
-                    className="w-11 h-11 flex items-center justify-center bg-slate-800 active:bg-emerald-600 rounded-2xl border border-slate-700/60 shadow-lg text-white font-bold select-none text-base transition-all active:scale-90"
-                    title="Strafe Right (D)"
-                  >
-                    ▶
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </>
       )}
 
@@ -448,8 +377,6 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
           buildings={buildings}
           plotSize={siteConfig.plotSize}
           onExitStreetView={onExitStreetView}
-          virtualKeys={virtualKeys}
-          isMobile={isMobile}
         />
       </Canvas>
     </div>

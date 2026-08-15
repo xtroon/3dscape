@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
 import { OrbitControls as OrbitControlsImpl } from 'three-stdlib';
 import { OrbitControls, PointerLockControls } from '@react-three/drei';
@@ -12,8 +12,11 @@ interface CameraControllerProps {
   buildings?: SiteBuilding[];
   plotSize?: [number, number];
   onExitStreetView?: () => void;
-  virtualKeys?: { w: boolean; a: boolean; s: boolean; d: boolean };
-  isMobile?: boolean;
+  eyeHeight?: number;
+  quickTurnAngle?: number | null;
+  onQuickTurnProcessed?: () => void;
+  onTelemetryUpdate?: (info: { heading: number; position: [number, number, number] }) => void;
+  onActiveKeyboardKeysChange?: (keys: { w: boolean; a: boolean; s: boolean; d: boolean; shift: boolean }) => void;
 }
 
 export const CameraController: React.FC<CameraControllerProps> = ({
@@ -22,9 +25,11 @@ export const CameraController: React.FC<CameraControllerProps> = ({
   doubleClickTarget,
   buildings,
   plotSize,
-  onExitStreetView,
-  virtualKeys,
-  isMobile,
+  eyeHeight = 1.8,
+  quickTurnAngle,
+  onQuickTurnProcessed,
+  onTelemetryUpdate,
+  onActiveKeyboardKeysChange,
 }) => {
   const controlsRef = useRef<OrbitControlsImpl>(null);
   const { camera, gl } = useThree();
@@ -35,78 +40,113 @@ export const CameraController: React.FC<CameraControllerProps> = ({
 
   const keysPressed = useRef<Record<string, boolean>>({});
 
-  const [isModifierPressed, setIsModifierPressed] = useState(false);
-
   const presetRef = useRef(preset);
   const buildingsRef = useRef(buildings);
   const plotSizeRef = useRef(plotSize);
-  const virtualKeysRef = useRef(virtualKeys);
-  const isMobileRef = useRef(isMobile);
+  const eyeHeightRef = useRef(eyeHeight);
+  const onTelemetryUpdateRef = useRef(onTelemetryUpdate);
+  const onActiveKeyboardKeysChangeRef = useRef(onActiveKeyboardKeysChange);
 
   useEffect(() => { presetRef.current = preset; }, [preset]);
   useEffect(() => { buildingsRef.current = buildings; }, [buildings]);
   useEffect(() => { plotSizeRef.current = plotSize; }, [plotSize]);
-  useEffect(() => { virtualKeysRef.current = virtualKeys; }, [virtualKeys]);
-  useEffect(() => { isMobileRef.current = isMobile; }, [isMobile]);
+  useEffect(() => { eyeHeightRef.current = eyeHeight; }, [eyeHeight]);
+  useEffect(() => { onTelemetryUpdateRef.current = onTelemetryUpdate; }, [onTelemetryUpdate]);
+  useEffect(() => { onActiveKeyboardKeysChangeRef.current = onActiveKeyboardKeysChange; }, [onActiveKeyboardKeysChange]);
 
+  // Handle Keyboard listeners & key status updates
   useEffect(() => {
+    const reportKeyStatus = () => {
+      if (onActiveKeyboardKeysChangeRef.current) {
+        onActiveKeyboardKeysChangeRef.current({
+          w: !!keysPressed.current['w'],
+          a: !!keysPressed.current['a'],
+          s: !!keysPressed.current['s'],
+          d: !!keysPressed.current['d'],
+          shift: !!keysPressed.current['shift'],
+        });
+      }
+    };
+
+    const isMovementKey = (e: KeyboardEvent) => {
+      const key = e.key.toLowerCase();
+      const code = e.code.toLowerCase();
+
+      return (
+        key === 'w' || key === 'a' || key === 's' || key === 'd' ||
+        key === 'arrowup' || key === 'arrowdown' || key === 'arrowleft' || key === 'arrowright' ||
+        code === 'keyw' || code === 'keya' || code === 'keys' || code === 'keyd'
+      );
+    };
+
+    const setMovementState = (e: KeyboardEvent, pressed: boolean) => {
+      const key = e.key.toLowerCase();
+      const code = e.code.toLowerCase();
+
+      if (key === 'w' || key === 'arrowup' || code === 'keyw') keysPressed.current['w'] = pressed;
+      if (key === 's' || key === 'arrowdown' || code === 'keys') keysPressed.current['s'] = pressed;
+      if (key === 'a' || key === 'arrowleft' || code === 'keya') keysPressed.current['a'] = pressed;
+      if (key === 'd' || key === 'arrowright' || code === 'keyd') keysPressed.current['d'] = pressed;
+      if (key === 'shift' || code.includes('shift')) keysPressed.current['shift'] = pressed;
+    };
+
     const handleKeyDown = (e: KeyboardEvent) => {
       if (['input', 'textarea'].includes((e.target as HTMLElement)?.tagName?.toLowerCase())) {
         return;
       }
-      keysPressed.current[e.key.toLowerCase()] = true;
-      if (e.key === 'Control' || e.key === 'Shift') {
-        setIsModifierPressed(true);
+
+      if (isMovementKey(e)) {
+        e.preventDefault();
+        e.stopPropagation();
       }
-    };
-    const handleKeyUp = (e: KeyboardEvent) => {
-      keysPressed.current[e.key.toLowerCase()] = false;
-      if (e.key === 'Control' || e.key === 'Shift') {
-        setIsModifierPressed(false);
-      }
-    };
-    const handleBlur = () => {
-      keysPressed.current = {};
-      setIsModifierPressed(false);
+
+      setMovementState(e, true);
+
+      reportKeyStatus();
     };
 
-    document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('keyup', handleKeyUp);
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (isMovementKey(e)) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+
+      setMovementState(e, false);
+
+      reportKeyStatus();
+    };
+
+    const handleBlur = () => {
+      keysPressed.current = {};
+      reportKeyStatus();
+    };
+
+    window.addEventListener('keydown', handleKeyDown, true);
+    window.addEventListener('keyup', handleKeyUp, true);
     window.addEventListener('blur', handleBlur);
 
     return () => {
-      document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('keyup', handleKeyUp);
+      window.removeEventListener('keydown', handleKeyDown, true);
+      window.removeEventListener('keyup', handleKeyUp, true);
       window.removeEventListener('blur', handleBlur);
     };
   }, []);
 
-  const wasLocked = useRef(false);
-
+  // Quick turn processing
   useEffect(() => {
-    const handleLockChange = () => {
-      const locked = !!document.pointerLockElement;
-      if (locked) {
-        wasLocked.current = true;
-        isLerping.current = false;
-      } else if (wasLocked.current) {
-        wasLocked.current = false;
-        if (preset === 'street' && onExitStreetView) {
-          onExitStreetView();
-        }
-      }
-    };
-    document.addEventListener('pointerlockchange', handleLockChange);
-    return () => {
-      document.removeEventListener('pointerlockchange', handleLockChange);
-    };
-  }, [preset, onExitStreetView]);
+    if (quickTurnAngle != null && preset === 'street') {
+      const euler = new THREE.Euler(0, 0, 0, 'YXZ');
+      euler.setFromQuaternion(camera.quaternion);
+      euler.y += (quickTurnAngle * Math.PI) / 180;
+      camera.quaternion.setFromEuler(euler);
+      if (onQuickTurnProcessed) onQuickTurnProcessed();
+    }
+  }, [quickTurnAngle, preset, camera, onQuickTurnProcessed]);
 
+  // Pointer drag 360° mouse / touch look when PointerLock is unlocked or inactive
   useEffect(() => {
-    // If not in Street View or not mobile, do not activate touch look-around
     const currentPreset = presetRef.current;
-    const isMobileDevice = isMobileRef.current;
-    if (currentPreset !== 'street' || !isMobileDevice) return;
+    if (currentPreset !== 'street') return;
 
     const dom = gl.domElement;
     let isDragging = false;
@@ -114,17 +154,21 @@ export const CameraController: React.FC<CameraControllerProps> = ({
     let prevY = 0;
 
     const euler = new THREE.Euler(0, 0, 0, 'YXZ');
-    euler.setFromQuaternion(camera.quaternion);
 
     const handlePointerDown = (e: PointerEvent) => {
+      // Ignore clicks on UI overlay buttons
       if ((e.target as HTMLElement)?.closest('.pointer-events-auto')) return;
+      if (document.pointerLockElement) return; // Handled by PointerLockControls
+
       isDragging = true;
       prevX = e.clientX;
       prevY = e.clientY;
+      euler.setFromQuaternion(camera.quaternion);
     };
 
     const handlePointerMove = (e: PointerEvent) => {
-      if (!isDragging) return;
+      if (!isDragging || document.pointerLockElement) return;
+
       const deltaX = e.clientX - prevX;
       const deltaY = e.clientY - prevY;
 
@@ -134,7 +178,7 @@ export const CameraController: React.FC<CameraControllerProps> = ({
       euler.y -= deltaX * 0.0035;
       euler.x -= deltaY * 0.0035;
 
-      euler.x = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, euler.x));
+      euler.x = Math.max(-Math.PI / 2.2, Math.min(Math.PI / 2.2, euler.x));
 
       camera.quaternion.setFromEuler(euler);
     };
@@ -152,8 +196,9 @@ export const CameraController: React.FC<CameraControllerProps> = ({
       window.removeEventListener('pointermove', handlePointerMove);
       window.removeEventListener('pointerup', handlePointerUp);
     };
-  }, [preset, isMobile, camera, gl]);
+  }, [preset, camera, gl]);
 
+  // Initial Camera Positioning when changing presets
   useEffect(() => {
     let pos: [number, number, number] = [0, 120, 80];
     let look: [number, number, number] = [0, 0, 0];
@@ -164,15 +209,13 @@ export const CameraController: React.FC<CameraControllerProps> = ({
     } else {
       switch (preset) {
         case 'master_map':
-          // Google Maps / Earth Style 3D Overhead Exploration
           pos = [0, 120, 80];
           look = [0, 0, 0];
           break;
 
         case 'street':
-          // Human Eye-Level Street View walking height
-          pos = [0, 1.8, 25];
-          look = [0, 1.8, 24.9]; // 0.1 units in front to allow in-place head rotation
+          pos = [0, eyeHeight, 25];
+          look = [0, eyeHeight, 24.9];
           break;
       }
     }
@@ -180,8 +223,9 @@ export const CameraController: React.FC<CameraControllerProps> = ({
     targetPos.current.set(pos[0], pos[1], pos[2]);
     targetLook.current.set(look[0], look[1], look[2]);
     isLerping.current = true;
-  }, [preset, focusTarget]);
+  }, [preset, focusTarget, eyeHeight]);
 
+  // Double click position lerp
   useEffect(() => {
     if (!doubleClickTarget || !controlsRef.current) return;
 
@@ -209,7 +253,7 @@ export const CameraController: React.FC<CameraControllerProps> = ({
     if (isLerping.current) {
       const lerpSpeed = delta * 5.0;
       camera.position.lerp(targetPos.current, lerpSpeed);
-      
+
       if (controlsRef.current) {
         controlsRef.current.target.lerp(targetLook.current, lerpSpeed);
         controlsRef.current.update();
@@ -224,20 +268,22 @@ export const CameraController: React.FC<CameraControllerProps> = ({
 
     // 2. Navigation Inputs
     if (isStreetLevel) {
-      // First Person WASD Walking with Collision
-      const keys = {
-        ...keysPressed.current,
-        ...(virtualKeysRef.current || {}),
-      };
-      if (keys['w'] || keys['s'] || keys['a'] || keys['d']) {
+      const keys = keysPressed.current;
+
+      const isWalking = keys['w'] || keys['s'] || keys['a'] || keys['d'];
+
+      if (isWalking) {
         isLerping.current = false;
 
-        const speed = 15.0 * delta; // Realistic walking speed
+        const isSprint = keys['shift'];
+        const baseSpeed = isSprint ? 30.0 : 15.0;
+        const speed = baseSpeed * delta;
+
         const moveVector = new THREE.Vector3();
 
         const dir = new THREE.Vector3();
         camera.getWorldDirection(dir);
-        dir.y = 0; // Lock walking strictly to XZ ground plane
+        dir.y = 0;
         if (dir.lengthSq() < 0.001) {
           const tempDir = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
           tempDir.y = 0;
@@ -252,15 +298,15 @@ export const CameraController: React.FC<CameraControllerProps> = ({
         const right = new THREE.Vector3();
         right.crossVectors(dir, new THREE.Vector3(0, 1, 0)).normalize();
 
+        // Keyboard WASD & Arrow Keys movement
         if (keys['w']) moveVector.addScaledVector(dir, speed);
         if (keys['s']) moveVector.addScaledVector(dir, -speed);
-        if (keys['a']) moveVector.addScaledVector(right, -speed); // Move left (negative right)
-        if (keys['d']) moveVector.addScaledVector(right, speed);  // Move right (positive right)
+        if (keys['a']) moveVector.addScaledVector(right, -speed);
+        if (keys['d']) moveVector.addScaledVector(right, speed);
 
-        // Compute proposed position
         const newPos = camera.position.clone().add(moveVector);
 
-        // Boundary checks (plotSize)
+        // Plot Boundary limits
         const currentPlotSize = plotSizeRef.current;
         if (currentPlotSize) {
           const halfWidth = currentPlotSize[0] / 2;
@@ -277,7 +323,6 @@ export const CameraController: React.FC<CameraControllerProps> = ({
             const dx = newPos.x - b.position[0];
             const dz = newPos.z - b.position[2];
             const distSq = dx * dx + dz * dz;
-            // Width or Depth bounding radius check
             const radius = Math.max(b.config.width, b.config.depth) * 0.75;
             if (distSq < radius * radius) {
               collision = true;
@@ -297,13 +342,28 @@ export const CameraController: React.FC<CameraControllerProps> = ({
         }
       }
 
-      // Lock height to walking eye level
-      camera.position.y = 1.8;
+      // Lock camera height to current eye height setting
+      const targetEyeHeight = eyeHeightRef.current || 1.8;
+      camera.position.y = targetEyeHeight;
       if (controlsRef.current) {
-        controlsRef.current.target.y = 1.8;
+        controlsRef.current.target.y = targetEyeHeight;
+      }
+
+      // Telemetry reporting (heading degrees & position)
+      if (onTelemetryUpdateRef.current) {
+        const dir = new THREE.Vector3();
+        camera.getWorldDirection(dir);
+        let rad = Math.atan2(dir.x, -dir.z);
+        let deg = (rad * 180) / Math.PI;
+        if (deg < 0) deg += 360;
+
+        onTelemetryUpdateRef.current({
+          heading: deg,
+          position: [camera.position.x, camera.position.y, camera.position.z],
+        });
       }
     } else {
-      // Normal View Keyboard Panning (WASD/Arrows)
+      // Master Map Keyboard Panning (WASD/Arrows)
       if (!controlsRef.current) return;
       const keys = keysPressed.current;
       if (
@@ -338,21 +398,18 @@ export const CameraController: React.FC<CameraControllerProps> = ({
   const isStreetLevel = preset === 'street';
 
   if (isStreetLevel) {
-    if (!isMobile) {
-      return <PointerLockControls />;
-    }
-    return null;
+    return <PointerLockControls />;
   }
 
   return (
     <OrbitControls
       ref={controlsRef}
       enableDamping={true}
-      dampingFactor={0.08} // Smooth fluid inertia glide
+      dampingFactor={0.08}
       rotateSpeed={0.8}
       zoomSpeed={1.2}
-      enablePan={true} // Free ground panning like Google Maps / Earth
-      screenSpacePanning={false} // Pan along XZ ground plane naturally
+      enablePan={true}
+      screenSpacePanning={false}
       panSpeed={1.8}
       maxPolarAngle={Math.PI / 2 - 0.02}
       minDistance={1.2}
