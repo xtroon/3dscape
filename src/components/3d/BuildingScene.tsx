@@ -65,8 +65,8 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
     : [60, 80, 50];
 
   const sunColor = isNight ? '#bae6fd' : isSunset ? '#f97316' : '#ffffff';
-  const dirLightIntensity = isNight ? 0.08 : isSunset ? 1.8 : 2.2;
-  const ambientIntensity = isNight ? 0.22 : isSunset ? 0.4 : 0.7;
+  const dirLightIntensity = isNight ? 0.15 : isSunset ? 1.8 : 2.2;
+  const ambientIntensity = isNight ? 0.38 : isSunset ? 0.48 : 0.7;
   const ambientColor = isNight ? '#1e293b' : isSunset ? '#fed7aa' : '#ffffff';
   const fogColor = isNight ? '#030712' : isSunset ? '#1a0d00' : '#cbd5e1';
 
@@ -142,17 +142,17 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
       <Canvas
         ref={canvasRef}
         shadows
-        camera={{ position: [0, 140, 0.1], fov: 48 }}
+        camera={{ position: [0, 260, 220], fov: 48, far: 2500 }}
         gl={{ preserveDrawingBuffer: true, antialias: true, alpha: false }}
         className="h-full w-full cursor-grab active:cursor-grabbing"
       >
         <color attach="background" args={[fogColor]} />
-        <fog attach="fog" args={[fogColor, 60, 260]} />
+        <fog attach="fog" args={[fogColor, 150, 1600]} />
 
         {/* Lighting */}
         <ambientLight intensity={ambientIntensity} color={ambientColor} />
         <hemisphereLight
-          intensity={isNight ? 0.15 : isSunset ? 0.3 : 0.6}
+          intensity={isNight ? 0.25 : isSunset ? 0.35 : 0.65}
           color={isNight ? '#bae6fd' : isSunset ? '#fdba74' : '#bae6fd'}
           groundColor={isNight ? '#020617' : isSunset ? '#2a1200' : '#14532d'}
         />
@@ -165,13 +165,14 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
           shadow-camera-near={0.5}
-          shadow-camera-far={250}
-          shadow-camera-left={-100}
-          shadow-camera-right={100}
-          shadow-camera-top={100}
-          shadow-camera-bottom={-100}
+          shadow-camera-far={1200}
+          shadow-camera-left={-300}
+          shadow-camera-right={300}
+          shadow-camera-top={300}
+          shadow-camera-bottom={-300}
           shadow-bias={-0.0001}
         />
+
 
         <Sky
           distance={450000}

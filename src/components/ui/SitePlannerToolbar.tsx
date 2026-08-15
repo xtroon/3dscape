@@ -11,6 +11,7 @@ import {
   X,
   Sparkles,
   Sun,
+  Droplets,
 } from 'lucide-react';
 import { PlacementTool, SiteElementType } from '../../types/building';
 
@@ -43,6 +44,12 @@ export const SitePlannerToolbar: React.FC<SitePlannerToolbarProps> = ({
       color: 'bg-slate-800 hover:bg-slate-700 text-slate-200',
     },
     {
+      id: 'waterfall',
+      label: 'Waterfall',
+      icon: <Droplets className="h-4 w-4 text-cyan-400" />,
+      color: 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-cyan-500/30',
+    },
+    {
       id: 'parking',
       label: 'Parking',
       icon: <Car className="h-4 w-4" />,
@@ -51,7 +58,7 @@ export const SitePlannerToolbar: React.FC<SitePlannerToolbarProps> = ({
     {
       id: 'pool',
       label: 'Pool',
-      icon: <Waves className="h-4 w-4" />,
+      icon: <Waves className="h-4 w-4 text-blue-400" />,
       color: 'bg-slate-800 hover:bg-slate-700 text-slate-200',
     },
     {
@@ -73,6 +80,7 @@ export const SitePlannerToolbar: React.FC<SitePlannerToolbarProps> = ({
       color: 'bg-slate-800 hover:bg-slate-700 text-slate-200 border border-amber-500/30',
     },
   ];
+
 
   return (
     <div className="absolute top-20 left-1/2 z-20 -translate-x-1/2 pointer-events-auto flex flex-col items-center gap-2">
