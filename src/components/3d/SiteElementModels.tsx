@@ -409,9 +409,9 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
     case 'park': {
       return (
         <group>
-          {/* Manicured Lawn Grass Base */}
-          <mesh receiveShadow position={[0, 0.05, 0]}>
-            <boxGeometry args={[width, 0.1, depth]} />
+          {/* Flat Manicured Lawn Base (Seamless with Ground) */}
+          <mesh receiveShadow position={[0, 0.005, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+            <planeGeometry args={[width, depth]} />
             <meshStandardMaterial
               color={isNight ? '#093a26' : isSunset ? '#15803d' : '#16a34a'}
               roughness={0.9}
@@ -419,14 +419,15 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
           </mesh>
 
           {/* Stone Paved Cross Paths */}
-          <mesh receiveShadow position={[0, 0.07, 0]}>
-            <boxGeometry args={[width, 0.02, 2.4]} />
+          <mesh receiveShadow position={[0, 0.012, 0]}>
+            <boxGeometry args={[width, 0.01, 2.4]} />
             <meshStandardMaterial color="#cbd5e1" roughness={0.7} />
           </mesh>
-          <mesh receiveShadow position={[0, 0.07, 0]}>
-            <boxGeometry args={[2.4, 0.02, depth]} />
+          <mesh receiveShadow position={[0, 0.012, 0]}>
+            <boxGeometry args={[2.4, 0.01, depth]} />
             <meshStandardMaterial color="#cbd5e1" roughness={0.7} />
           </mesh>
+
 
           {/* Central Fountain Tier Feature */}
           <mesh castShadow receiveShadow position={[0, 0.4, 0]}>

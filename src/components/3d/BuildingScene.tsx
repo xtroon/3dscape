@@ -59,16 +59,17 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
   const isSunset = timeOfDay === 'sunset';
 
   const sunPosition: [number, number, number] = isNight
-    ? [30, 80, 30] // Moon position overhead
+    ? [50, 150, 50] // Moon position
     : isSunset
-    ? [100, 12, -50] // Low sun position
+    ? [120, 8, -80] // Low sunset position
     : [60, 80, 50];
 
-  const sunColor = isNight ? '#bae6fd' : isSunset ? '#f97316' : '#ffffff';
-  const dirLightIntensity = isNight ? 0.15 : isSunset ? 1.8 : 2.2;
-  const ambientIntensity = isNight ? 0.38 : isSunset ? 0.48 : 0.7;
-  const ambientColor = isNight ? '#1e293b' : isSunset ? '#fed7aa' : '#ffffff';
-  const fogColor = isNight ? '#030712' : isSunset ? '#1a0d00' : '#cbd5e1';
+  const sunColor = isNight ? '#93c5fd' : isSunset ? '#ff7700' : '#ffffff';
+  const dirLightIntensity = isNight ? 0.25 : isSunset ? 1.9 : 2.2;
+  const ambientIntensity = isNight ? 0.45 : isSunset ? 0.55 : 0.7;
+  const ambientColor = isNight ? '#0b132b' : isSunset ? '#ffaa55' : '#ffffff';
+  const fogColor = isNight ? '#070a14' : isSunset ? '#3a1500' : '#cbd5e1';
+
 
   const snap = (val: number): number => {
     if (!gridSnap || snapSize <= 0) return val;
@@ -177,11 +178,12 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
         <Sky
           distance={450000}
           sunPosition={sunPosition}
-          inclination={isSunset ? 0.52 : isNight ? 0.0 : 0.6}
+          inclination={isSunset ? 0.49 : isNight ? 0.01 : 0.6}
           azimuth={isSunset ? 0.25 : 0.1}
           turbidity={isSunset ? 8 : 2}
           rayleigh={isSunset ? 6 : 1}
         />
+
 
         {/* Plot Ground */}
         <PlotGround config={siteConfig} />
@@ -362,13 +364,14 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
 
         <ContactShadows
           position={[0, 0.01, 0]}
-          opacity={0.65}
-          scale={160}
+          opacity={0.3}
+          scale={600}
           blur={1.8}
           far={12}
           resolution={1024}
           color="#000000"
         />
+
 
         {/* Camera Controller */}
         <CameraController
