@@ -6,6 +6,9 @@ import {
   ArrowRight,
   Search,
   FolderOpen,
+  Pencil,
+  Check,
+  X,
 } from 'lucide-react';
 import { projectManager, ProjectData } from '../../utils/projectManager';
 
@@ -20,6 +23,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({
 }) => {
   const [projects, setProjects] = useState<ProjectData[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
 
   const loadProjectsList = () => {
     setProjects(projectManager.getProjects());
@@ -48,6 +53,26 @@ export const LandingPage: React.FC<LandingPageProps> = ({
     e.stopPropagation();
     projectManager.duplicateProject(id);
     loadProjectsList();
+  };
+
+  const startRename = (id: string, currentName: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setEditingId(id);
+    setEditingName(currentName);
+  };
+
+  const submitRename = (id: string, e?: React.MouseEvent | React.KeyboardEvent) => {
+    if (e) e.stopPropagation();
+    if (editingName.trim()) {
+      projectManager.renameProject(id, editingName.trim());
+      loadProjectsList();
+    }
+    setEditingId(null);
+  };
+
+  const cancelRename = (e?: React.MouseEvent | React.KeyboardEvent) => {
+    if (e) e.stopPropagation();
+    setEditingId(null);
   };
 
   return (
@@ -203,20 +228,60 @@ export const LandingPage: React.FC<LandingPageProps> = ({
               year: 'numeric',
             });
 
+            const isEditing = editingId === proj.id;
+
             return (
               <div
                 key={proj.id}
-                onClick={() => onOpenProject(proj.id)}
+                onClick={() => {
+                  if (!isEditing) onOpenProject(proj.id);
+                }}
                 className="minimal-card rounded-lg p-5 flex flex-col justify-between cursor-pointer transition-all min-h-[190px]"
               >
                 <div>
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <h3 className="text-base font-semibold text-zinc-900 line-clamp-1 hover:text-black">
-                      {proj.name}
-                    </h3>
-                    <span className="font-mono text-[10px] text-zinc-400 whitespace-nowrap">
-                      {updatedTimeStr}
-                    </span>
+                    {isEditing ? (
+                      <div
+                        className="flex items-center gap-1.5 w-full mr-2"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <input
+                          type="text"
+                          value={editingName}
+                          onChange={(e) => setEditingName(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') submitRename(proj.id, e);
+                            if (e.key === 'Escape') cancelRename(e);
+                          }}
+                          autoFocus
+                          className="px-2 py-1 text-sm font-semibold text-zinc-900 border border-zinc-400 rounded focus:outline-none focus:border-zinc-900 w-full"
+                          placeholder="Project name..."
+                        />
+                        <button
+                          onClick={(e) => submitRename(proj.id, e)}
+                          title="Save name"
+                          className="p-1.5 rounded bg-zinc-900 text-white hover:bg-black transition-colors"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={(e) => cancelRename(e)}
+                          title="Cancel"
+                          className="p-1.5 rounded text-zinc-500 hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <h3 className="text-base font-semibold text-zinc-900 line-clamp-1 hover:text-black">
+                          {proj.name}
+                        </h3>
+                        <span className="font-mono text-[10px] text-zinc-400 whitespace-nowrap">
+                          {updatedTimeStr}
+                        </span>
+                      </>
+                    )}
                   </div>
 
                   <div className="font-mono text-xs text-zinc-500 mt-1">
@@ -230,6 +295,13 @@ export const LandingPage: React.FC<LandingPageProps> = ({
                   </span>
 
                   <div className="flex items-center gap-1">
+                    <button
+                      onClick={(e) => startRename(proj.id, proj.name, e)}
+                      title="Rename project"
+                      className="p-1.5 rounded text-zinc-400 hover:text-zinc-900 hover:bg-zinc-100 transition-colors"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
                     <button
                       onClick={(e) => handleDuplicate(proj.id, e)}
                       title="Duplicate project"
