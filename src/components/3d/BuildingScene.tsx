@@ -58,25 +58,17 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
   const isNight = timeOfDay === 'night';
   const isSunset = timeOfDay === 'sunset';
 
-  // Sky shader sun vector (Must be below horizon for night!)
-  const skySunPosition: [number, number, number] = isNight
-    ? [0, -200, -200]
-    : isSunset
-    ? [200, 3, -100]
-    : [60, 80, 50];
-
-  // Directional Light vector (Moonlight or Sunlight position)
+  // Directional Light position (Moonlight or Sunlight)
   const dirLightPosition: [number, number, number] = isNight
-    ? [50, 150, 50]
+    ? [80, 160, 80]
     : isSunset
-    ? [150, 12, -80]
-    : [60, 80, 50];
+    ? [150, 25, -80]
+    : [60, 100, 50];
 
-  const sunColor = isNight ? '#93c5fd' : isSunset ? '#ff5500' : '#ffffff';
-  const dirLightIntensity = isNight ? 0.35 : isSunset ? 1.8 : 2.2;
-  const ambientIntensity = isNight ? 0.25 : isSunset ? 0.45 : 0.7;
-  const ambientColor = isNight ? '#0f172a' : isSunset ? '#fdba74' : '#ffffff';
-  const fogColor = isNight ? '#030712' : isSunset ? '#2a0903' : '#cbd5e1';
+  const sunColor = isNight ? '#93c5fd' : isSunset ? '#ff6600' : '#ffffff';
+  const dirLightIntensity = isNight ? 1.4 : isSunset ? 3.0 : 2.2;
+  const ambientIntensity = isNight ? 0.6 : isSunset ? 0.8 : 0.7;
+  const ambientColor = isNight ? '#334155' : isSunset ? '#ff9944' : '#ffffff';
 
   const snap = (val: number): number => {
     if (!gridSnap || snapSize <= 0) return val;
@@ -154,22 +146,21 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
         gl={{ preserveDrawingBuffer: true, antialias: true, alpha: false }}
         className="h-full w-full cursor-grab active:cursor-grabbing"
       >
-        <color attach="background" args={[fogColor]} />
-        <fog attach="fog" args={[fogColor, 150, 1600]} />
+        <color attach="background" args={[isNight ? '#090d16' : isSunset ? '#2a0903' : '#cbd5e1']} />
 
         {/* Lighting */}
         <ambientLight intensity={ambientIntensity} color={ambientColor} />
         <hemisphereLight
-          intensity={isNight ? 0.2 : isSunset ? 0.35 : 0.65}
-          color={isNight ? '#38bdf8' : isSunset ? '#fdba74' : '#bae6fd'}
-          groundColor={isNight ? '#020617' : isSunset ? '#2a1200' : '#14532d'}
+          intensity={isNight ? 0.5 : isSunset ? 0.7 : 0.65}
+          color={isNight ? '#38bdf8' : isSunset ? '#ffaa44' : '#bae6fd'}
+          groundColor={isNight ? '#091322' : isSunset ? '#2d1204' : '#14532d'}
         />
 
         <directionalLight
           position={dirLightPosition}
           intensity={dirLightIntensity}
           color={sunColor}
-          castShadow={!isNight}
+          castShadow
           shadow-mapSize-width={2048}
           shadow-mapSize-height={2048}
           shadow-camera-near={0.5}
@@ -181,14 +172,16 @@ export const BuildingScene: React.FC<BuildingSceneProps> = ({
           shadow-bias={-0.0001}
         />
 
-        <Sky
-          distance={450000}
-          sunPosition={skySunPosition}
-          turbidity={isSunset ? 12 : isNight ? 0.5 : 2}
-          rayleigh={isSunset ? 8 : isNight ? 0.1 : 1}
-          mieCoefficient={0.005}
-          mieDirectionalG={isSunset ? 0.95 : 0.7}
-        />
+        {!isNight && (
+          <Sky
+            distance={450000}
+            sunPosition={isSunset ? [300, 25, -100] : [60, 100, 50]}
+            turbidity={isSunset ? 8 : 2}
+            rayleigh={isSunset ? 4 : 1}
+            mieCoefficient={0.005}
+            mieDirectionalG={isSunset ? 0.95 : 0.7}
+          />
+        )}
 
 
         {/* Plot Ground */}

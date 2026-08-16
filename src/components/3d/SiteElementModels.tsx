@@ -461,12 +461,13 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
                   emissiveIntensity={isNight ? 2.5 : 0.5}
                 />
               </mesh>
-              {(isNight || isSunset) && (
-                <pointLight position={[0, 0.9, 0]} color="#fef08a" intensity={isNight ? 14 : 5} distance={12} />
-              )}
             </group>
           ))}
 
+          {/* Single Central Park Ambient Light */}
+          {(isNight || isSunset) && (
+            <pointLight position={[0, 2.0, 0]} color="#fef08a" intensity={isNight ? 12 : 5} distance={18} />
+          )}
 
           {isSelected && (
             <mesh position={[0, 0.1, 0]}>
@@ -494,32 +495,25 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
           {/* Glass Facade & Window Glow */}
           <mesh position={[0, 2.5, depth / 2 + 0.05]}>
             <boxGeometry args={[width - 2, 4.0, 0.1]} />
-            <meshPhysicalMaterial
+            <meshStandardMaterial
               color="#38bdf8"
-              transmission={0.8}
               transparent
-              opacity={0.7}
+              opacity={0.75}
+              roughness={0.1}
+              metalness={0.6}
               emissive={isNight ? new THREE.Color('#fef08a') : new THREE.Color('#000000')}
-              emissiveIntensity={isNight ? 0.6 : 0}
+              emissiveIntensity={isNight ? 0.8 : 0}
             />
           </mesh>
 
-          {/* Exterior Wall Sconce Warm Lights for Night */}
+          {/* Exterior Entrance Light */}
           {(isNight || isSunset) && (
-            <>
-              <pointLight
-                position={[-width / 2 + 0.5, 3.5, depth / 2 + 0.4]}
-                color="#fef08a"
-                intensity={isNight ? 18 : 6}
-                distance={15}
-              />
-              <pointLight
-                position={[width / 2 - 0.5, 3.5, depth / 2 + 0.4]}
-                color="#fef08a"
-                intensity={isNight ? 18 : 6}
-                distance={15}
-              />
-            </>
+            <pointLight
+              position={[0, 3.5, depth / 2 + 0.5]}
+              color="#fef08a"
+              intensity={isNight ? 16 : 6}
+              distance={16}
+            />
           )}
 
           {isSelected && (
@@ -552,18 +546,6 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
             <sphereGeometry args={[1.4, 8, 8]} />
             <meshStandardMaterial color="#15803d" roughness={0.7} />
           </mesh>
-
-          {/* Garden Tree Uplight Spotlight at Night */}
-          {(isNight || isSunset) && (
-            <spotLight
-              position={[0.6, 0.1, 0.6]}
-              target-position={[0, 4.0, 0]}
-              color="#fbbf24"
-              intensity={isNight ? 16 : 5}
-              distance={12}
-              angle={Math.PI / 4}
-            />
-          )}
 
           {isSelected && (
             <mesh position={[0, 3.0, 0]}>
@@ -619,37 +601,18 @@ export const SiteElementModel: React.FC<SiteElementModelProps> = ({
               <mesh position={[0, height + 0.3, 0.8]} material={lampGlowMaterial}>
                 <boxGeometry args={[0.4, 0.2, 0.6]} />
               </mesh>
-              {/* Volumetric Light Beam Mesh */}
-              {(isNight || isSunset) && (
-                <mesh position={[0, height / 2, 0.8]}>
-                  <coneGeometry args={[height * 0.24, height, 16, 1, true]} />
-                  <meshBasicMaterial
-                     color={lightColor}
-                     map={beamTexture || undefined}
-                     transparent
-                     opacity={isNight ? 0.35 : 0.12}
-                     blending={THREE.AdditiveBlending}
-                     depthWrite={false}
-                     side={THREE.DoubleSide}
-                  />
-                </mesh>
-              )}
-              {/* Active Illumination Source */}
-              {(isNight || isSunset) && (
-                <spotLight
-                  position={[0, height + 0.2, 0.8]}
-                  intensity={isNight ? lightIntensity * 3.0 : lightIntensity * 1.5}
-                  color={lightColor}
-                  distance={Math.max(16, height * 3.2)}
-                  angle={Math.PI / 3.8}
-                  penumbra={0.65}
-                  decay={1.8}
-                  castShadow
-                  shadow-bias={-0.0005}
-                />
-              )}
             </group>
           ))}
+
+          {/* Single Street Light Active Illumination Source */}
+          {(isNight || isSunset) && (
+            <pointLight
+              position={[0, height + 0.2, 0]}
+              intensity={isNight ? lightIntensity * 1.5 : lightIntensity * 0.8}
+              color={lightColor}
+              distance={Math.max(18, height * 3.0)}
+            />
+          )}
 
           {isSelected && (
             <mesh position={[0, height / 2, 0]}>

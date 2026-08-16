@@ -72,25 +72,22 @@ export const ProceduralBuilding: React.FC<BuildingProps> = ({ config }) => {
       metalness: 0.1,
     });
 
-    const windowGlassMat = new THREE.MeshPhysicalMaterial({
+    const windowGlassMat = new THREE.MeshStandardMaterial({
       color: windowColor,
       roughness: 0.1,
-      metalness: 0.8,
-      transmission: 0.5,
+      metalness: 0.5,
       transparent: true,
-      opacity: 0.8,
-      reflectivity: 0.9,
+      opacity: 0.85,
       emissive: isNight ? new THREE.Color('#fef08a') : isSunset ? new THREE.Color('#fed7aa') : new THREE.Color('#000000'),
-      emissiveIntensity: isNight ? 0.6 : isSunset ? 0.25 : 0.0,
+      emissiveIntensity: isNight ? 0.9 : isSunset ? 0.35 : 0.0,
     });
 
-    const balconyGlassMat = new THREE.MeshPhysicalMaterial({
+    const balconyGlassMat = new THREE.MeshStandardMaterial({
       color: balconyColor,
       roughness: 0.15,
       metalness: 0.2,
-      transmission: 0.7,
       transparent: true,
-      opacity: 0.6,
+      opacity: 0.65,
     });
 
     const railingMetalMat = new THREE.MeshStandardMaterial({
@@ -99,15 +96,14 @@ export const ProceduralBuilding: React.FC<BuildingProps> = ({ config }) => {
       metalness: 0.8,
     });
 
-    const entranceGlassMat = new THREE.MeshPhysicalMaterial({
+    const entranceGlassMat = new THREE.MeshStandardMaterial({
       color: '#e0f2fe',
       roughness: 0.05,
-      metalness: 0.9,
-      transmission: 0.85,
+      metalness: 0.6,
       transparent: true,
-      opacity: 0.7,
+      opacity: 0.75,
       emissive: isNight || isSunset ? new THREE.Color('#fef08a') : new THREE.Color('#ffffff'),
-      emissiveIntensity: isNight ? 0.8 : isSunset ? 0.4 : 0.1,
+      emissiveIntensity: isNight ? 1.0 : isSunset ? 0.5 : 0.1,
     });
 
     const doorFrameMat = new THREE.MeshStandardMaterial({
