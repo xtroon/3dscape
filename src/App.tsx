@@ -389,7 +389,7 @@ export const App: React.FC = () => {
     try {
       const dataUrl = canvasRef.current.toDataURL('image/png');
       const link = document.createElement('a');
-      link.download = `BuildView3D_SitePlanner_${buildings.length}Buildings.png`;
+      link.download = `3DScape_SitePlanner_${buildings.length}Buildings.png`;
       link.href = dataUrl;
       link.click();
 

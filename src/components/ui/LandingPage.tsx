@@ -82,10 +82,10 @@ export const LandingPage: React.FC<LandingPageProps> = ({
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-7 w-7 rounded bg-zinc-900 text-white flex items-center justify-center font-mono font-bold text-xs">
-              BV
+              3D
             </div>
             <span className="text-base font-semibold tracking-tight text-zinc-900">
-              BuildView
+              3DScape
             </span>
             <span className="text-xs font-mono text-zinc-500 border border-zinc-200 px-2 py-0.5 rounded">
               v1.0
@@ -375,7 +375,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({
       {/* Minimal Footer */}
       <footer className="py-8 px-6 border-t border-zinc-200 text-xs font-mono text-zinc-500">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div>BuildView — Minimal 3D Site Planner</div>
+          <div>3DScape — Minimal 3D Site Planner</div>
           <div>{new Date().getFullYear()} · Browser Local Storage</div>
         </div>
       </footer>

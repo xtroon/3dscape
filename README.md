@@ -1,8 +1,8 @@
-# BuildView 3D — Residential Site Planner
+# 3DScape — Residential Site Planner
 
 > *"Design your entire property before you build it."*
 
-**BuildView 3D** is a modern, interactive web-based 3D architectural visualization and master site planning tool designed for real-estate developers, contractors, and homebuilders to design, customize, and present full residential communities on a large land plot.
+**3DScape** is a modern, interactive web-based 3D architectural visualization and master site planning tool designed for real-estate developers, contractors, and homebuilders to design, customize, and present full residential communities on a large land plot.
 
 ---
 

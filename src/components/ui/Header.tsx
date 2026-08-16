@@ -38,13 +38,13 @@ export const Header: React.FC<HeaderProps> = ({
           title="Return to Projects Dashboard"
           className="flex h-7 w-7 items-center justify-center rounded bg-zinc-900 text-white font-mono font-bold text-xs hover:bg-black transition-colors"
         >
-          BV
+          3D
         </button>
 
         <div>
           <div className="flex items-center gap-2">
             <h1 className="text-xs font-bold text-zinc-900">
-              {projectName || 'BuildView Project'}
+              {projectName || '3DScape Project'}
             </h1>
             <span className="inline-flex items-center gap-1 font-mono text-[10px] text-zinc-500 bg-zinc-100 px-1.5 py-0.5 rounded border border-zinc-200">
               <Check className="h-3 w-3 text-zinc-600" /> Saved
